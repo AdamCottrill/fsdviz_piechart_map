@@ -1,0 +1,13 @@
+
+.point:hover {
+    fill: yellow;
+    fill-opacity: 1.0;
+    stroke-width: 2;
+}
+
+
+
+.highlighted {
+    fill: #ffcc99;
+    stroke: #ff00ff;
+}

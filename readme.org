@@ -1,0 +1,6 @@
+* Creating dynamic check boxes with d3 and crossfilter2
+
+This little project is a demonstration of how dynamic check boxes can
+be created (or destroyed) to reflect currently available dimensions in
+a crossfilter2 object. They function essentially the same as plots
+created using dc.js but with check boxes.
