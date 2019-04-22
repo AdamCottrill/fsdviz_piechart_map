@@ -1,5 +1,5 @@
 export const checkBoxes = (selection, props) => {
-  const { label, xfdim, xfgroup, filters } = props;
+  const { filterkey, xfdim, xfgroup, filters } = props;
 
   // semantic-ui checkbox markup:
   //  `<div class="checkbox" id={}>
@@ -9,7 +9,7 @@ export const checkBoxes = (selection, props) => {
   //      </label>
   //  </div>`
 
-  let myfilters = filters[label];
+  let myfilters = filters[filterkey];
 
   let keys = xfgroup.top("Infinity").filter(d => d.value > 0);
   keys.sort((a, b) => a.key - b.key);
@@ -38,7 +38,7 @@ export const checkBoxes = (selection, props) => {
       let checkboxes = cbarray
         .selectAll("input[type=checkbox]")
         .property("checked", false);
-      filters[label] = [];
+      filters[filterkey] = [];
       xfdim.filter();
     });
 
@@ -55,7 +55,7 @@ export const checkBoxes = (selection, props) => {
       let checkboxes = cbarray
         .selectAll("input[type=checkbox]")
         .property("checked", true);
-      filters[label] = keys.map(d => d.key);
+      filters[filterkey] = keys.map(d => d.key);
       xfdim.filter(val => myfilters.indexOf(val) > -1);
     });
 
@@ -87,9 +87,9 @@ export const checkBoxes = (selection, props) => {
         // remove the value of the box that was just unchecked
         myfilters = myfilters.filter(val => val !== this.value);
       }
-      filters[label] = myfilters;
+      filters[filterkey] = myfilters;
       xfdim.filter(val => myfilters.indexOf(val) > -1);
     });
 
-  uiCheckbox.append("label").text(d => d.key + " (n=" + d.value + ")");
+  uiCheckbox.append("filterkey").text(d => d.key + " (n=" + d.value + ")");
 };

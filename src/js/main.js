@@ -33,11 +33,11 @@ const months = [
 const prepare_stocking_data = data => {
   data.point = [+data.dd_lon, +data.dd_lat];
   data.total_stocked = +data.total_stocked;
-  data.year_class = +data.year_class;
+  data.year_class = data.year_class ? data.year_class + "" : "Unkn";
   data.yreq = +data.yreq;
   data.mark = data.mark ? data.mark : "None";
-  //  data.month = data.month ? data.month : "Unkn";
-  data.stockingMonth = data.month ? months[data.month] : "Unkn";
+  data.month = data.month ? data.month + "" : "0";
+  //data.stockingMonth = months.indexOf(data.month) ? months[data.month] : "Unkn";
 };
 
 const initialize_filter = (key, dim) => {
@@ -90,18 +90,18 @@ json(dataURL, prepare_stocking_data).then(data => {
   initialize_filter("stateProv", stateProvDim);
   initialize_filter("jurisdiction", jurisdictionDim);
   initialize_filter("manUnit", manUnitDim);
+  initialize_filter("agency", agencyDim);
   initialize_filter("species", speciesDim);
   initialize_filter("strain", strainDim);
-  initialize_filter("agency", agencyDim);
   initialize_filter("yearClass", yearClassDim);
   initialize_filter("lifeStage", lifeStageDim);
   initialize_filter("mark", markDim);
-  initialize_filter("month", monthDim);
+  initialize_filter("stockingMonth", monthDim);
   initialize_filter("stkMeth", stkMethDim);
 
   let stateProvSelection = select("#state-prov-filter");
   checkBoxes(stateProvSelection, {
-    label: "stateProv",
+    filterkey: "stateProv",
     xfdim: stateProvDim,
     xfgroup: stateProvGroup,
     filters: filters
@@ -109,7 +109,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let jurisdictionSelection = select("#jurisdiction-filter");
   checkBoxes(jurisdictionSelection, {
-    label: "jurisdiction",
+    filterkey: "jurisdiction",
     xfdim: jurisdictionDim,
     xfgroup: jurisdictionGroup,
     filters: filters
@@ -117,7 +117,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let manUnitSelection = select("#manUnit-filter");
   checkBoxes(manUnitSelection, {
-    label: "manUnit",
+    filterkey: "manUnit",
     xfdim: manUnitDim,
     xfgroup: manUnitGroup,
     filters: filters
@@ -125,7 +125,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let agencySelection = select("#agency-filter");
   checkBoxes(agencySelection, {
-    label: "agency",
+    filterkey: "agency",
     xfdim: agencyDim,
     xfgroup: agencyGroup,
     filters: filters
@@ -133,7 +133,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let speciesSelection = select("#species-filter");
   checkBoxes(speciesSelection, {
-    label: "species",
+    filterkey: "species",
     xfdim: speciesDim,
     xfgroup: speciesGroup,
     filters: filters
@@ -141,7 +141,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let strainSelection = select("#strain-filter");
   checkBoxes(strainSelection, {
-    label: "strain",
+    filterkey: "strain",
     xfdim: strainDim,
     xfgroup: strainGroup,
     filters: filters
@@ -149,7 +149,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let yearClassSelection = select("#year-class-filter");
   checkBoxes(yearClassSelection, {
-    label: "yearClass",
+    filterkey: "yearClass",
     xfdim: yearClassDim,
     xfgroup: yearClassGroup,
     filters: filters
@@ -157,7 +157,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let markSelection = select("#mark-filter");
   checkBoxes(markSelection, {
-    label: "mark",
+    filterkey: "mark",
     xfdim: markDim,
     xfgroup: markGroup,
     filters: filters
@@ -165,7 +165,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let monthSelection = select("#stocking-month-filter");
   checkBoxes(monthSelection, {
-    label: "month",
+    filterkey: "stockingMonth",
     xfdim: monthDim,
     xfgroup: monthGroup,
     filters: filters
@@ -173,7 +173,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let stkMethSelection = select("#stocking-method-filter");
   checkBoxes(stkMethSelection, {
-    label: "stkMeth",
+    filterkey: "stkMeth",
     xfdim: stkMethDim,
     xfgroup: stkMethGroup,
     filters: filters
@@ -181,85 +181,87 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let lifeStageSelection = select("#life-stage-filter");
   checkBoxes(lifeStageSelection, {
-    label: "lifeStage",
+    filterkey: "lifeStage",
     xfdim: lifeStageDim,
     xfgroup: lifeStageGroup,
     filters: filters
   });
 
+  // if the crossfilter changes, update our checkboxes:
+
   ndx.onChange(() => {
     checkBoxes(stateProvSelection, {
-      label: "stateProv",
+      filterkey: "stateProv",
       xfdim: stateProvDim,
       xfgroup: stateProvGroup,
       filters: filters
     });
 
     checkBoxes(jurisdictionSelection, {
-      label: "jurisdiction",
+      filterkey: "jurisdiction",
       xfdim: jurisdictionDim,
       xfgroup: jurisdictionGroup,
       filters: filters
     });
 
     checkBoxes(manUnitSelection, {
-      label: "manUnit",
+      filterkey: "manUnit",
       xfdim: manUnitDim,
       xfgroup: manUnitGroup,
       filters: filters
     });
 
     checkBoxes(agencySelection, {
-      label: "agency",
+      filterkey: "agency",
       xfdim: agencyDim,
       xfgroup: agencyGroup,
       filters: filters
     });
 
     checkBoxes(speciesSelection, {
-      label: "species",
+      filterkey: "species",
       xfdim: speciesDim,
       xfgroup: speciesGroup,
       filters: filters
     });
 
     checkBoxes(strainSelection, {
-      label: "strain",
+      filterkey: "strain",
       xfdim: strainDim,
       xfgroup: strainGroup,
       filters: filters
     });
 
     checkBoxes(yearClassSelection, {
-      label: "yearClass",
+      filterkey: "yearClass",
       xfdim: yearClassDim,
       xfgroup: yearClassGroup,
       filters: filters
     });
 
     checkBoxes(markSelection, {
-      label: "mark",
+      filterkey: "mark",
       xfdim: markDim,
       xfgroup: markGroup,
       filters: filters
     });
 
     checkBoxes(monthSelection, {
-      label: "month",
+      filterkey: "stockingMonth",
       xfdim: monthDim,
       xfgroup: monthGroup,
       filters: filters
     });
 
     checkBoxes(stkMethSelection, {
-      label: "stkMeth",
+      filterkey: "stkMeth",
       xfdim: stkMethDim,
       xfgroup: stkMethGroup,
       filters: filters
     });
 
     checkBoxes(lifeStageSelection, {
-      label: "lifeStage",
+      filterkey: "lifeStage",
       xfdim: lifeStageDim,
       xfgroup: lifeStageGroup,
       filters: filters
