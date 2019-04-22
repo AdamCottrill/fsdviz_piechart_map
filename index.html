@@ -3,8 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>D3-Crossfilter Map</title>
-
+    <title>Great Lake Fish Stocking</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
@@ -12,107 +11,159 @@
     <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
   </head>
   <body>
-    <div class="ui container">
-      <h2>Filter with Checkbox Arrays</h2>
-
-      <div class="ui container">
-        <div class="ui cards">
-          <div class="ui card">
-            <div class="content">
-              <div class="header">State/Province</div>
+    <div class="ui container fluid" id="content">
+      <div class="ui grid">
+        <div class="two wide column">
+          <h3>Refine by:</h3>
+          <div class="ui styled fluid accordion">
+            <div class="title">
+              <i class="dropdown icon"></i>
+              State or Province
             </div>
             <div class="content">
               <div id="state-prov-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Jurisdiction</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Jurisdiction
             </div>
             <div class="content">
               <div id="jurisdiction-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Management Unit</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Management Unit
             </div>
             <div class="content">
               <div id="manUnit-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Agency</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Agency
             </div>
             <div class="content">
               <div id="agency-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Species</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Species
             </div>
             <div class="content">
               <div id="species-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Strain</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Strain
             </div>
             <div class="content">
               <div id="strain-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Year Class</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Year Class
             </div>
             <div class="content">
               <div id="year-class-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Mark</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Mark
             </div>
             <div class="content">
               <div id="mark-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Life Stage</div>
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Life Stage
             </div>
             <div class="content">
               <div id="life-stage-filter"></div>
             </div>
-          </div>
 
-          <div class="ui card">
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Stocking Method
+            </div>
             <div class="content">
-              <div class="header">Stocking Month</div>
+              <div id="stocking-method-filter"></div>
+            </div>
+
+            <div class="title">
+              <i class="dropdown icon"></i>
+              Stocking Month
             </div>
             <div class="content">
               <div id="stocking-month-filter"></div>
             </div>
           </div>
-
-          <div class="ui card">
-            <div class="content">
-              <div class="header">Stocking Mehtod</div>
+        </div>
+        <div class="fourteen wide column">
+          <div class="ui grid">
+            <div class="row">
+              <div class="twelve wide column">
+                <h3>Stocking Events</h3>
+              </div>
+              <div class="four wide right aligned column">
+                <a
+                  class="ui left labeled icon mini blue compact button"
+                  href="#"
+                  ><i class="left arrow icon"></i>Previous Year</a
+                >
+                <a
+                  class="ui right labeled icon mini blue compact button"
+                  href="#"
+                  ><i class="right arrow icon"></i>Next Year</a
+                >
+              </div>
             </div>
-            <div class="content">
-              <div id="stocking-method-filter"></div>
+            <div class="row">
+              <div class="twelve wide column">
+                <div id="map"></div>
+              </div>
+              <div class="four wide column">
+                <div class="ui fluid card">
+                  <div class="content">
+                    <div class="header">Stats Panel</div>
+                  </div>
+                  <div class="content">
+                    <p>Interesting stats here.</p>
+
+                    <ul>
+                      <li><span id="total-stocked"></span> Fish</li>
+                      <li><span id="event-count"></span> Events</li>
+                      <li><span id="species-count"></span> Species</li>
+                    </ul>
+
+                    <div id="stocked-summary-table">
+                      <table
+                        class="ui celled table tablesorter"
+                        style="font-size: 0.7em"
+                      >
+                        <thead>
+                          <tr>
+                            <th>Species</th>
+                            <th>Events</th>
+                            <th>Fish</th>
+                          </tr>
+                        </thead>
+                        <tbody id="stocked-summary-table-tbody"></tbody>
+                      </table>
+                    </div>
+                    <br />
+                    <div class="ui row">
+                      <div id="point-info"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -132,6 +183,7 @@
 
     <script type="text/javascript">
       $(".ui.checkbox").checkbox();
+      $(".ui.accordion").accordion();
     </script>
   </body>
 </html>

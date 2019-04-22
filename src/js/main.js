@@ -5,6 +5,8 @@ import crossfilter from "crossfilter2";
 
 import { checkBoxes } from "./checkBoxArray";
 
+import { prepare_stocking_data, initialize_filter } from "./utils";
+
 const log = debug("app:log");
 
 if (ENV !== "production") {
@@ -29,24 +31,6 @@ const months = [
   "Nov",
   "Dec"
 ];
-
-const prepare_stocking_data = data => {
-  data.point = [+data.dd_lon, +data.dd_lat];
-  data.total_stocked = +data.total_stocked;
-  data.year_class = data.year_class ? data.year_class + "" : "Unkn";
-  data.yreq = +data.yreq;
-  data.mark = data.mark ? data.mark : "None";
-  data.month = data.month ? data.month + "" : "0";
-  //data.stockingMonth = months.indexOf(data.month) ? months[data.month] : "Unkn";
-};
-
-const initialize_filter = (key, dim) => {
-  filters[key] = dim
-    .group()
-    .all()
-    .map(d => d.key);
-  dim.filter(val => filters[key].indexOf(val) > -1);
-};
 
 // the name of the column with our response:
 const column = "events";
