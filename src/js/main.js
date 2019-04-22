@@ -6,6 +6,7 @@ import crossfilter from "crossfilter2";
 import { checkBoxes } from "./checkBoxArray";
 
 import { prepare_stocking_data, initialize_filter } from "./utils";
+import { stockingAdd, stockingRemove, stockingInitial } from "./reducers";
 
 const log = debug("app:log");
 
@@ -32,43 +33,30 @@ const months = [
   "Dec"
 ];
 
-// our spatial dimensions will need custom reducer functions that will
-// keep track of the number of events, yealing equivalents, and total
-// number stocked by species - if the species exists update, if not
-// create it, if event count is 0 delete it.
-
-// what can be species_name, strain, life_stage, stk_method
+// 'what' controls the column that our reducers group.
+// it can be species_name, strain, life_stage, stk_method
 const what = "species_name";
 
-// for each group('what'), we want to return an object of the form:
+//let mapBounds = pgbbox_corners(pgbbox);
+let mapBounds = [bbox.slice(0, 2), bbox.slice(2)];
 
-//{
-// yreq : ,
-// total: ,
-// events: ,
-//}
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiYWNvdHRyaWxsIiwiYSI6ImNpazVmb3Q2eDAwMWZpZm0yZTQ1cjF3NTkifQ.Pb1wCYs0lKgjnTGz43DjVQ";
 
-const reduceAdd = (p, v) => {
-  let counts = p[v[what]] || { yreq: 0, total: 0, events: 0 };
-  counts.yreq += v.yreq;
-  counts.total += v.total_stocked;
-  counts.events += v.events;
-  p[v[what]] = counts;
-  return p;
-};
+//Setup mapbox-gl map
+let map = new mapboxgl.Map({
+  container: "map",
+  style: "mapbox://styles/mapbox/streets-v11",
+  //center: [-81.857221, 45.194331],
+  //zoom: 7,
+  bounds: mapBounds
+});
 
-const reduceRemove = (p, v) => {
-  let counts = p[v[what]] || { yreq: 0, total: 0, events: 0 };
-  counts.yreq -= v.yreq;
-  counts.total -= v.total_stocked;
-  counts.events -= v.events;
-  //p[v[what]] = (p[v[what]] || 0) - v.yreq;
-  return p;
-};
+map.addControl(new mapboxgl.NavigationControl());
 
-const reduceInitial = () => {
-  return {};
-};
+//Setup our svg layer that we can manipulate with d3
+//let container = map.getCanvasContainer();
+//let svg = d3.select(container).append("svg");
 
 const filters = {};
 
@@ -111,7 +99,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let lakeGroup = lakeDim
     .group()
-    .reduce(reduceAdd, reduceRemove, reduceInitial);
+    .reduce(stockingAdd, stockingRemove, stockingInitial);
   console.log("lakeGroup.top(Infinity) = ", lakeGroup.top(Infinity));
 
   //ininitialize our filters - all checked at first
