@@ -25,6 +25,14 @@
           <div class="ui styled fluid accordion">
             <div class="title">
               <i class="dropdown icon"></i>
+              Lake
+            </div>
+            <div class="content">
+              <div id="lake-filter"></div>
+            </div>
+
+            <div class="title">
+              <i class="dropdown icon"></i>
               State or Province
             </div>
             <div class="content">
@@ -186,6 +194,8 @@
         "http://127.0.0.1:8000/api/v1/stocking/mapdata/events/2012/";
 
       const bbox = [-92.094, 41.3808, -76.0591, 49.0158];
+
+      let what = "species_name";
     </script>
 
     <script type="text/javascript" src="crossfiltermap.js"></script>

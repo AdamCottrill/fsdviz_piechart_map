@@ -91,5 +91,7 @@ export const checkBoxes = (selection, props) => {
       xfdim.filter(val => myfilters.indexOf(val) > -1);
     });
 
+
+
   uiCheckbox.append("filterkey").text(d => d.key + " (n=" + d.value + ")");
 };

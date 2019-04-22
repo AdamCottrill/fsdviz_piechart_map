@@ -3,7 +3,6 @@
 // number stocked by species - if the species exists update, if not
 // create it, if event count is 0 delete it.
 
-
 // for each group('what'), we want to return an object of the form:
 
 //{
@@ -11,8 +10,6 @@
 // total: ,
 // events: ,
 //}
-
-const what='';
 
 export const stockingAdd = (p, v) => {
   let counts = p[v[what]] || { yreq: 0, total: 0, events: 0 };
