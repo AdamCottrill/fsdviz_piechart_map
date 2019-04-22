@@ -32,10 +32,48 @@ const months = [
   "Dec"
 ];
 
-// the name of the column with our response:
-const column = "events";
+// our spatial dimensions will need custom reducer functions that will
+// keep track of the number of events, yealing equivalents, and total
+// number stocked by species - if the species exists update, if not
+// create it, if event count is 0 delete it.
+
+// what can be species_name, strain, life_stage, stk_method
+const what = "species_name";
+
+// for each group('what'), we want to return an object of the form:
+
+//{
+// yreq : ,
+// total: ,
+// events: ,
+//}
+
+const reduceAdd = (p, v) => {
+  let counts = p[v[what]] || { yreq: 0, total: 0, events: 0 };
+  counts.yreq += v.yreq;
+  counts.total += v.total_stocked;
+  counts.events += v.events;
+  p[v[what]] = counts;
+  return p;
+};
+
+const reduceRemove = (p, v) => {
+  let counts = p[v[what]] || { yreq: 0, total: 0, events: 0 };
+  counts.yreq -= v.yreq;
+  counts.total -= v.total_stocked;
+  counts.events -= v.events;
+  //p[v[what]] = (p[v[what]] || 0) - v.yreq;
+  return p;
+};
+
+const reduceInitial = () => {
+  return {};
+};
 
 const filters = {};
+
+// the name of the column with our response:
+const column = "events";
 
 json(dataURL, prepare_stocking_data).then(data => {
   data.forEach(d => prepare_stocking_data(d));
@@ -44,6 +82,7 @@ json(dataURL, prepare_stocking_data).then(data => {
 
   let ndx = crossfilter(data);
 
+  let lakeDim = ndx.dimension(d => d.lake);
   let agencyDim = ndx.dimension(d => d.agency_abbrev);
   let stateProvDim = ndx.dimension(d => d.stateprov);
   let jurisdictionDim = ndx.dimension(d => d.jurisdiction_slug);
@@ -70,18 +109,23 @@ json(dataURL, prepare_stocking_data).then(data => {
   let monthGroup = monthDim.group().reduceSum(d => d[column]);
   let stkMethGroup = stkMethDim.group().reduceSum(d => d[column]);
 
+  let lakeGroup = lakeDim
+    .group()
+    .reduce(reduceAdd, reduceRemove, reduceInitial);
+  console.log("lakeGroup.top(Infinity) = ", lakeGroup.top(Infinity));
+
   //ininitialize our filters - all checked at first
-  initialize_filter("stateProv", stateProvDim);
-  initialize_filter("jurisdiction", jurisdictionDim);
-  initialize_filter("manUnit", manUnitDim);
-  initialize_filter("agency", agencyDim);
-  initialize_filter("species", speciesDim);
-  initialize_filter("strain", strainDim);
-  initialize_filter("yearClass", yearClassDim);
-  initialize_filter("lifeStage", lifeStageDim);
-  initialize_filter("mark", markDim);
-  initialize_filter("stockingMonth", monthDim);
-  initialize_filter("stkMeth", stkMethDim);
+  initialize_filter(filters, "stateProv", stateProvDim);
+  initialize_filter(filters, "jurisdiction", jurisdictionDim);
+  initialize_filter(filters, "manUnit", manUnitDim);
+  initialize_filter(filters, "agency", agencyDim);
+  initialize_filter(filters, "species", speciesDim);
+  initialize_filter(filters, "strain", strainDim);
+  initialize_filter(filters, "yearClass", yearClassDim);
+  initialize_filter(filters, "lifeStage", lifeStageDim);
+  initialize_filter(filters, "mark", markDim);
+  initialize_filter(filters, "stockingMonth", monthDim);
+  initialize_filter(filters, "stkMeth", stkMethDim);
 
   let stateProvSelection = select("#state-prov-filter");
   checkBoxes(stateProvSelection, {
