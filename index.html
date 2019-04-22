@@ -144,39 +144,57 @@
                 <div id="map"></div>
               </div>
               <div class="four wide column">
-                <div class="ui fluid card">
-                  <div class="content">
-                    <div class="header">Stats Panel</div>
-                  </div>
-                  <div class="content">
-                    <p>Interesting stats here.</p>
+                <div class="ui tabular menu">
+                  <a class="item active" data-tab="statistics">
+                    Statistics
+                  </a>
+                  <a class="item" data-tab="settings">
+                    Settings
+                  </a>
+                </div>
 
-                    <ul>
-                      <li><span id="total-stocked"></span> Fish</li>
-                      <li><span id="event-count"></span> Events</li>
-                      <li><span id="species-count"></span> Species</li>
-                    </ul>
-
-                    <div id="stocked-summary-table">
-                      <table
-                        class="ui celled table tablesorter"
-                        style="font-size: 0.7em"
-                      >
-                        <thead>
-                          <tr>
-                            <th>Species</th>
-                            <th>Events</th>
-                            <th>Fish</th>
-                          </tr>
-                        </thead>
-                        <tbody id="stocked-summary-table-tbody"></tbody>
-                      </table>
+                <div
+                  class="ui bottom attached tab segment"
+                  data-tab="statistics"
+                >
+                  <div class="ui fluid card">
+                    <div class="content">
+                      <div class="header">Stats Panel</div>
                     </div>
-                    <br />
-                    <div class="ui row">
-                      <div id="point-info"></div>
+                    <div class="content">
+                      <p>Interesting stats here.</p>
+
+                      <ul>
+                        <li><span id="total-stocked"></span> Fish</li>
+                        <li><span id="event-count"></span> Events</li>
+                        <li><span id="species-count"></span> Species</li>
+                      </ul>
+
+                      <div id="stocked-summary-table">
+                        <table
+                          class="ui celled table tablesorter"
+                          style="font-size: 0.7em"
+                        >
+                          <thead>
+                            <tr>
+                              <th>Species</th>
+                              <th>Events</th>
+                              <th>Fish</th>
+                            </tr>
+                          </thead>
+                          <tbody id="stocked-summary-table-tbody"></tbody>
+                        </table>
+                      </div>
+                      <br />
+                      <div class="ui row">
+                        <div id="point-info"></div>
+                      </div>
                     </div>
                   </div>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="settings">
+                  <h3>Spatial Strata</h3>
+                  <div id="strata-selector"></div>
                 </div>
               </div>
             </div>
@@ -195,6 +213,7 @@
 
       const bbox = [-92.094, 41.3808, -76.0591, 49.0158];
 
+      let spatialUnit = "jurisdiction";
       let what = "species_name";
     </script>
 
@@ -203,6 +222,7 @@
     <script type="text/javascript">
       $(".ui.checkbox").checkbox();
       $(".ui.accordion").accordion();
+      $(".menu .item").tab();
     </script>
   </body>
 </html>

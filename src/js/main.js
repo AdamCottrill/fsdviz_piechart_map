@@ -1,6 +1,6 @@
 import debug from "debug";
 
-import { json, tsv, select, sum } from "d3";
+import { selectAll, json, tsv, select, sum } from "d3";
 import crossfilter from "crossfilter2";
 
 import { checkBoxes } from "./checkBoxArray";
@@ -9,6 +9,7 @@ import { prepare_stocking_data, initialize_filter } from "./utils";
 import { stockingAdd, stockingRemove, stockingInitial } from "./reducers";
 
 import { mapbox_overlay } from "./mapbox_overlay";
+import { spatialRadioButtons } from "./RadioButtons";
 
 const log = debug("app:log");
 
@@ -41,10 +42,36 @@ map.addControl(new mapboxgl.NavigationControl());
 let container = map.getCanvasContainer();
 let svg = select(container).append("svg");
 
+// re-render our visualization whenever the view changes
+map.on("viewreset", function() {
+  svg.call(overlay);
+});
+map.on("move", function() {
+  svg.call(overlay);
+});
+
 const filters = {};
 
 // the name of the column with our response:
 const column = "events";
+
+let strata = [
+  { strata: "lake", label: "Lake" },
+  { strata: "stateProv", label: "State/Province" },
+  { strata: "jurisdiction", label: "Jurisdiction" },
+  { strata: "mu", label: "Managment Unit" },
+  { strata: "grid10", label: "10-minute Grid" }
+];
+
+let spatialSelector = spatialRadioButtons()
+  .selector("#strata-selector")
+  .strata(strata)
+  .checked(spatialUnit);
+
+spatialSelector();
+
+// our radio button listener
+const spatial_resolution = selectAll("#strata-form input");
 
 Promise.all([json(dataURL), json("data/centroids.json")]).then(
   ([data, centroids]) => {
@@ -302,43 +329,48 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       });
     });
 
-    let spatialUnit = "mu";
+    const ptAccessor = d => Object.keys(d.value).map(x => d.value[x].events);
 
-    const accessor = d => Object.keys(d.value).map(x => d.value[x].events);
+    // a helper function to get the data in the correct format for plotting.
+    const get_pts = (spatialUnit, centriods, ptAccessor) => {
+      let pts;
 
-    let pts;
+      switch (spatialUnit) {
+        case "lake":
+          pts = Object.values(lakeMapGroup.all());
+          break;
+        case "stateProv":
+          pts = Object.values(stateProvMapGroup.all());
+          break;
+        case "jurisdiction":
+          pts = Object.values(jurisdictionMapGroup.all());
+          break;
+        case "mu":
+          pts = Object.values(manUnitMapGroup.all());
+          break;
+        case "grid10":
+          pts = Object.values(grid10MapGroup.all());
+          break;
+      }
 
-    switch (spatialUnit) {
-      case "lake":
-        pts = Object.values(lakeMapGroup.all());
-        break;
-      case "stateProv":
-        pts = Object.values(stateProvMapGroup.all());
-        break;
-      case "jurisdiction":
-        pts = Object.values(jurisdictionMapGroup.all());
-        break;
-      case "mu":
-        pts = Object.values(manUnitMapGroup.all());
-        break;
-      case "grid10":
-        pts = Object.values(grid10MapGroup.all());
-        break;
-    }
+      pts.forEach(d => (d["coordinates"] = centroids[spatialUnit][d.key]));
+      pts.forEach(d => (d["total"] = sum(ptAccessor(d))));
+      return pts;
+    };
 
-    pts.forEach(d => (d["coordinates"] = centroids[spatialUnit][d.key]));
-    pts.forEach(d => (d["total"] = sum(accessor(d))));
+    let pts = get_pts(spatialUnit, centroids, ptAccessor);
 
     let overlay = mapbox_overlay(map);
     overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
     svg.data([pts]).call(overlay);
 
-    // re-render our visualization whenever the view changes
-    map.on("viewreset", function() {
-      svg.call(overlay);
-    });
-    map.on("move", function() {
-      svg.call(overlay);
+    spatial_resolution.on("change", function() {
+      // when the radio buttons change, we and to update the selected
+      // saptial strata and refesh the map
+      spatialUnit = this.value;
+      pts = get_pts(spatialUnit, centroids, ptAccessor);
+      svg.data([pts]).call(overlay);
+      //refreshMap(spatial_xfDims);
     });
   }
 );
