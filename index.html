@@ -154,7 +154,7 @@
                 </div>
 
                 <div
-                  class="ui bottom attached tab segment"
+                  class="ui bottom attached tab segment active"
                   data-tab="statistics"
                 >
                   <div class="ui fluid card">
@@ -162,24 +162,24 @@
                       <div class="header">Stats Panel</div>
                     </div>
                     <div class="content">
-                      <p>Interesting stats here.</p>
-
+                      <p>Summary Statstics:</p>
                       <ul>
-                        <li><span id="total-stocked"></span> Fish</li>
-                        <li><span id="event-count"></span> Events</li>
+                          <li><span id="total-stocked"></span> Fish</li>
+                          <li><span id="yreq-stocked"></span> Yearling Equiv.</li>
+                          <li><span id="event-count"></span> Events</li>
                         <li><span id="species-count"></span> Species</li>
                       </ul>
 
                       <div id="stocked-summary-table">
                         <table
-                          class="ui celled table tablesorter"
+                          class="ui celled compact table tablesorter"
                           style="font-size: 0.7em"
                         >
                           <thead>
                             <tr>
                               <th>Species</th>
-                              <th>Events</th>
-                              <th>Fish</th>
+                              <th class="center aligned">Events</th>
+                              <th class="center aligned">Yr.Eq.</th>
                             </tr>
                           </thead>
                           <tbody id="stocked-summary-table-tbody"></tbody>
@@ -193,7 +193,7 @@
                   </div>
                 </div>
                 <div class="ui bottom attached tab segment" data-tab="settings">
-                  <h3>Spatial Strata</h3>
+                  <h3>Spatial Resolution</h3>
                   <div id="strata-selector"></div>
                 </div>
               </div>

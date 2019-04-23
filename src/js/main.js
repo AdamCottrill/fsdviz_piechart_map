@@ -10,6 +10,8 @@ import { stockingAdd, stockingRemove, stockingInitial } from "./reducers";
 
 import { mapbox_overlay } from "./mapbox_overlay";
 import { spatialRadioButtons } from "./RadioButtons";
+import { update_stats_panel } from "./stats_panel";
+
 
 const log = debug("app:log");
 
@@ -42,6 +44,8 @@ map.addControl(new mapboxgl.NavigationControl());
 let container = map.getCanvasContainer();
 let svg = select(container).append("svg");
 
+
+let overlay = mapbox_overlay(map);
 // re-render our visualization whenever the view changes
 map.on("viewreset", function() {
   svg.call(overlay);
@@ -79,6 +83,8 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
     data.forEach(d => prepare_stocking_data(d));
 
     let ndx = crossfilter(data);
+
+    let all = ndx.groupAll().reduce(stockingAdd, stockingRemove, stockingInitial);
 
     let lakeDim = ndx.dimension(d => d.lake);
     let agencyDim = ndx.dimension(d => d.agency_abbrev);
@@ -131,6 +137,12 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
     let grid10MapGroup = grid10Dim
       .group()
       .reduce(stockingAdd, stockingRemove, stockingInitial);
+
+
+      update_stats_panel(all);
+
+
+
 
     //ininitialize our filters - all checked at first
     initialize_filter(filters, "lake", lakeDim);
@@ -242,8 +254,13 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       filters: filters
     });
 
+
+
     // if the crossfilter changes, update our checkboxes:
-    ndx.onChange(() => {
+      ndx.onChange(() => {
+
+          update_stats_panel(all);
+
       checkBoxes(lakeSelection, {
         filterkey: "lake",
         xfdim: lakeDim,
@@ -327,6 +344,8 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
         xfgroup: lifeStageGroup,
         filters: filters
       });
+
+
     });
 
     const ptAccessor = d => Object.keys(d.value).map(x => d.value[x].events);
@@ -360,7 +379,7 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
 
     let pts = get_pts(spatialUnit, centroids, ptAccessor);
 
-    let overlay = mapbox_overlay(map);
+
     overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
     svg.data([pts]).call(overlay);
 

@@ -15,7 +15,9 @@ svg {
     height: 100%;
 }
 
-
+.species-name {
+  text-transform: capitalize;
+  }
 
 .point:hover {
     fill: yellow;
