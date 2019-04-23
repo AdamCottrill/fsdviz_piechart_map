@@ -44,7 +44,6 @@ map.addControl(new mapboxgl.NavigationControl());
 let container = map.getCanvasContainer();
 let svg = select(container).append("svg");
 
-
 let overlay = mapbox_overlay(map);
 // re-render our visualization whenever the view changes
 map.on("viewreset", function() {
@@ -59,12 +58,15 @@ const filters = {};
 // the name of the column with our response:
 const column = "events";
 
+
+// radio buttons
 let strata = [
   { strata: "lake", label: "Lake" },
   { strata: "stateProv", label: "State/Province" },
   { strata: "jurisdiction", label: "Jurisdiction" },
   { strata: "mu", label: "Managment Unit" },
-  { strata: "grid10", label: "10-minute Grid" }
+    { strata: "grid10", label: "10-minute Grid" },
+  { strata: "geom", label: "Reported Point" }
 ];
 
 let spatialSelector = spatialRadioButtons()
@@ -92,6 +94,7 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
     let jurisdictionDim = ndx.dimension(d => d.jurisdiction_slug);
     let manUnitDim = ndx.dimension(d => d.man_unit);
     let grid10Dim = ndx.dimension(d => d.grid10);
+    let geomDim = ndx.dimension(d => d.geom);
     let speciesDim = ndx.dimension(d => d.species_name);
     let strainDim = ndx.dimension(d => d.strain);
     let yearClassDim = ndx.dimension(d => d.year_class);
@@ -138,10 +141,11 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       .group()
       .reduce(stockingAdd, stockingRemove, stockingInitial);
 
+    let geomMapGroup = geomDim
+      .group()
+      .reduce(stockingAdd, stockingRemove, stockingInitial);
 
       update_stats_panel(all);
-
-
 
 
     //ininitialize our filters - all checked at first
@@ -350,6 +354,16 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
 
     const ptAccessor = d => Object.keys(d.value).map(x => d.value[x].events);
 
+
+
+      const get_coordinates = pt => {
+          let coords = pt.slice(pt.indexOf('(') + 1 ,pt.indexOf(')'))
+              .split(' ');
+          return [parseFloat(coords[0]), parseFloat(coords[1])];
+      };
+
+
+
     // a helper function to get the data in the correct format for plotting.
     const get_pts = (spatialUnit, centriods, ptAccessor) => {
       let pts;
@@ -370,9 +384,16 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
         case "grid10":
           pts = Object.values(grid10MapGroup.all());
           break;
+        case "geom":
+          pts = Object.values(geomMapGroup.all());
+          break;
       }
 
-      pts.forEach(d => (d["coordinates"] = centroids[spatialUnit][d.key]));
+     if (spatialUnit === "geom") {
+         pts.forEach(d => (d["coordinates"] = get_coordinates(d.key)));
+     } else {
+        pts.forEach(d => (d["coordinates"] = centroids[spatialUnit][d.key]));
+     }
       pts.forEach(d => (d["total"] = sum(ptAccessor(d))));
       return pts;
     };
