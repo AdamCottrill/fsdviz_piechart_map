@@ -1,22 +1,22 @@
-import debug from "debug";
+import debug from 'debug';
 
-import { selectAll, json, tsv, select, sum } from "d3";
-import crossfilter from "crossfilter2";
+import { selectAll, json, tsv, select, sum } from 'd3';
+import crossfilter from 'crossfilter2';
 
-import { checkBoxes } from "./checkBoxArray";
+import { checkBoxes } from './checkBoxArray';
 
-import { prepare_stocking_data, initialize_filter } from "./utils";
-import { stockingAdd, stockingRemove, stockingInitial } from "./reducers";
+import { prepare_stocking_data, initialize_filter } from './utils';
+import { stockingAdd, stockingRemove, stockingInitial } from './reducers';
 
-import { mapbox_overlay } from "./mapbox_overlay";
-import { spatialRadioButtons } from "./RadioButtons";
-import { update_stats_panel } from "./stats_panel";
+import { mapbox_overlay } from './mapbox_overlay';
+import { spatialRadioButtons } from './RadioButtons';
+import { update_stats_panel } from './stats_panel';
 
 
-const log = debug("app:log");
+const log = debug('app:log');
 
-if (ENV !== "production") {
-  debug.enable("*");
+if (ENV !== 'production') {
+  debug.enable('*');
   const now = new Date().toString().slice(16, -33);
   log(`Debugging is enabled! (${now})`);
 } else {
@@ -27,12 +27,12 @@ if (ENV !== "production") {
 let mapBounds = [bbox.slice(0, 2), bbox.slice(2)];
 
 mapboxgl.accessToken =
-  "pk.eyJ1IjoiYWNvdHRyaWxsIiwiYSI6ImNpazVmb3Q2eDAwMWZpZm0yZTQ1cjF3NTkifQ.Pb1wCYs0lKgjnTGz43DjVQ";
+  'pk.eyJ1IjoiYWNvdHRyaWxsIiwiYSI6ImNpazVmb3Q2eDAwMWZpZm0yZTQ1cjF3NTkifQ.Pb1wCYs0lKgjnTGz43DjVQ';
 
 //Setup mapbox-gl map
 let map = new mapboxgl.Map({
-  container: "map",
-  style: "mapbox://styles/mapbox/streets-v11",
+  container: 'map',
+  style: 'mapbox://styles/mapbox/streets-v11',
   //center: [-81.857221, 45.194331],
   //zoom: 7,
   bounds: mapBounds
@@ -42,44 +42,47 @@ map.addControl(new mapboxgl.NavigationControl());
 
 //Setup our svg layer that we can manipulate with d3
 let container = map.getCanvasContainer();
-let svg = select(container).append("svg");
+let svg = select(container).append('svg');
 
 let overlay = mapbox_overlay(map);
 // re-render our visualization whenever the view changes
-map.on("viewreset", function() {
+map.on('viewreset', function() {
   svg.call(overlay);
 });
-map.on("move", function() {
+map.on('move', function() {
   svg.call(overlay);
 });
 
 const filters = {};
 
-// the name of the column with our response:
-const column = "events";
+
+const column = 'events';
+// the name of the columnwith our response:
+const responseVar = 'yreq';
+//const responseVar = 'events';
 
 
 // radio buttons
 let strata = [
-  { strata: "lake", label: "Lake" },
-  { strata: "stateProv", label: "State/Province" },
-  { strata: "jurisdiction", label: "Jurisdiction" },
-  { strata: "mu", label: "Managment Unit" },
-    { strata: "grid10", label: "10-minute Grid" },
-  { strata: "geom", label: "Reported Point" }
+  { strata: 'lake', label: 'Lake' },
+  { strata: 'stateProv', label: 'State/Province' },
+  { strata: 'jurisdiction', label: 'Jurisdiction' },
+  { strata: 'mu', label: 'Managment Unit' },
+  { strata: 'grid10', label: '10-minute Grid' },
+  { strata: 'geom', label: 'Reported Point' }
 ];
 
 let spatialSelector = spatialRadioButtons()
-  .selector("#strata-selector")
+  .selector('#strata-selector')
   .strata(strata)
   .checked(spatialUnit);
 
 spatialSelector();
 
 // our radio button listener
-const spatial_resolution = selectAll("#strata-form input");
+const spatial_resolution = selectAll('#strata-form input');
 
-Promise.all([json(dataURL), json("data/centroids.json")]).then(
+Promise.all([json(dataURL), json('data/centroids.json')]).then(
   ([data, centroids]) => {
     // prepare our stocking data
     data.forEach(d => prepare_stocking_data(d));
@@ -145,223 +148,127 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       .group()
       .reduce(stockingAdd, stockingRemove, stockingInitial);
 
-      update_stats_panel(all);
+    update_stats_panel(all);
 
 
     //ininitialize our filters - all checked at first
-    initialize_filter(filters, "lake", lakeDim);
-    initialize_filter(filters, "stateProv", stateProvDim);
-    initialize_filter(filters, "jurisdiction", jurisdictionDim);
-    initialize_filter(filters, "manUnit", manUnitDim);
-    initialize_filter(filters, "agency", agencyDim);
-    initialize_filter(filters, "species", speciesDim);
-    initialize_filter(filters, "strain", strainDim);
-    initialize_filter(filters, "yearClass", yearClassDim);
-    initialize_filter(filters, "lifeStage", lifeStageDim);
-    initialize_filter(filters, "mark", markDim);
-    initialize_filter(filters, "stockingMonth", monthDim);
-    initialize_filter(filters, "stkMeth", stkMethDim);
+    initialize_filter(filters, 'lake', lakeDim);
+    initialize_filter(filters, 'stateProv', stateProvDim);
+    initialize_filter(filters, 'jurisdiction', jurisdictionDim);
+    initialize_filter(filters, 'manUnit', manUnitDim);
+    initialize_filter(filters, 'agency', agencyDim);
+    initialize_filter(filters, 'species', speciesDim);
+    initialize_filter(filters, 'strain', strainDim);
+    initialize_filter(filters, 'yearClass', yearClassDim);
+    initialize_filter(filters, 'lifeStage', lifeStageDim);
+    initialize_filter(filters, 'mark', markDim);
+    initialize_filter(filters, 'stockingMonth', monthDim);
+    initialize_filter(filters, 'stkMeth', stkMethDim);
 
-    let lakeSelection = select("#lake-filter");
+    let lakeSelection = select('#lake-filter');
     checkBoxes(lakeSelection, {
-      filterkey: "lake",
+      filterkey: 'lake',
       xfdim: lakeDim,
       xfgroup: lakeGroup,
       filters: filters
     });
 
-    let stateProvSelection = select("#state-prov-filter");
+    let stateProvSelection = select('#state-prov-filter');
     checkBoxes(stateProvSelection, {
-      filterkey: "stateProv",
+      filterkey: 'stateProv',
       xfdim: stateProvDim,
       xfgroup: stateProvGroup,
       filters: filters
     });
 
-    let jurisdictionSelection = select("#jurisdiction-filter");
+    let jurisdictionSelection = select('#jurisdiction-filter');
     checkBoxes(jurisdictionSelection, {
-      filterkey: "jurisdiction",
+      filterkey: 'jurisdiction',
       xfdim: jurisdictionDim,
       xfgroup: jurisdictionGroup,
       filters: filters
     });
 
-    let manUnitSelection = select("#manUnit-filter");
+    let manUnitSelection = select('#manUnit-filter');
     checkBoxes(manUnitSelection, {
-      filterkey: "manUnit",
+      filterkey: 'manUnit',
       xfdim: manUnitDim,
       xfgroup: manUnitGroup,
       filters: filters
     });
 
-    let agencySelection = select("#agency-filter");
+    let agencySelection = select('#agency-filter');
     checkBoxes(agencySelection, {
-      filterkey: "agency",
+      filterkey: 'agency',
       xfdim: agencyDim,
       xfgroup: agencyGroup,
       filters: filters
     });
 
-    let speciesSelection = select("#species-filter");
+    let speciesSelection = select('#species-filter');
     checkBoxes(speciesSelection, {
-      filterkey: "species",
+      filterkey: 'species',
       xfdim: speciesDim,
       xfgroup: speciesGroup,
       filters: filters
     });
 
-    let strainSelection = select("#strain-filter");
+    let strainSelection = select('#strain-filter');
     checkBoxes(strainSelection, {
-      filterkey: "strain",
+      filterkey: 'strain',
       xfdim: strainDim,
       xfgroup: strainGroup,
       filters: filters
     });
 
-    let yearClassSelection = select("#year-class-filter");
+    let yearClassSelection = select('#year-class-filter');
     checkBoxes(yearClassSelection, {
-      filterkey: "yearClass",
+      filterkey: 'yearClass',
       xfdim: yearClassDim,
       xfgroup: yearClassGroup,
       filters: filters
     });
 
-    let markSelection = select("#mark-filter");
+    let markSelection = select('#mark-filter');
     checkBoxes(markSelection, {
-      filterkey: "mark",
+      filterkey: 'mark',
       xfdim: markDim,
       xfgroup: markGroup,
       filters: filters
     });
 
-    let monthSelection = select("#stocking-month-filter");
+    let monthSelection = select('#stocking-month-filter');
     checkBoxes(monthSelection, {
-      filterkey: "stockingMonth",
+      filterkey: 'stockingMonth',
       xfdim: monthDim,
       xfgroup: monthGroup,
       filters: filters
     });
 
-    let stkMethSelection = select("#stocking-method-filter");
+    let stkMethSelection = select('#stocking-method-filter');
     checkBoxes(stkMethSelection, {
-      filterkey: "stkMeth",
+      filterkey: 'stkMeth',
       xfdim: stkMethDim,
       xfgroup: stkMethGroup,
       filters: filters
     });
 
-    let lifeStageSelection = select("#life-stage-filter");
+    let lifeStageSelection = select('#life-stage-filter');
     checkBoxes(lifeStageSelection, {
-      filterkey: "lifeStage",
+      filterkey: 'lifeStage',
       xfdim: lifeStageDim,
       xfgroup: lifeStageGroup,
       filters: filters
     });
 
 
+    const ptAccessor = d => Object.keys(d.value).map(x => d.value[x][responseVar]);
 
-    // if the crossfilter changes, update our checkboxes:
-      ndx.onChange(() => {
-
-          update_stats_panel(all);
-
-      checkBoxes(lakeSelection, {
-        filterkey: "lake",
-        xfdim: lakeDim,
-        xfgroup: lakeGroup,
-        filters: filters
-      });
-
-      checkBoxes(stateProvSelection, {
-        filterkey: "stateProv",
-        xfdim: stateProvDim,
-        xfgroup: stateProvGroup,
-        filters: filters
-      });
-
-      checkBoxes(jurisdictionSelection, {
-        filterkey: "jurisdiction",
-        xfdim: jurisdictionDim,
-        xfgroup: jurisdictionGroup,
-        filters: filters
-      });
-
-      checkBoxes(manUnitSelection, {
-        filterkey: "manUnit",
-        xfdim: manUnitDim,
-        xfgroup: manUnitGroup,
-        filters: filters
-      });
-
-      checkBoxes(agencySelection, {
-        filterkey: "agency",
-        xfdim: agencyDim,
-        xfgroup: agencyGroup,
-        filters: filters
-      });
-
-      checkBoxes(speciesSelection, {
-        filterkey: "species",
-        xfdim: speciesDim,
-        xfgroup: speciesGroup,
-        filters: filters
-      });
-
-      checkBoxes(strainSelection, {
-        filterkey: "strain",
-        xfdim: strainDim,
-        xfgroup: strainGroup,
-        filters: filters
-      });
-
-      checkBoxes(yearClassSelection, {
-        filterkey: "yearClass",
-        xfdim: yearClassDim,
-        xfgroup: yearClassGroup,
-        filters: filters
-      });
-
-      checkBoxes(markSelection, {
-        filterkey: "mark",
-        xfdim: markDim,
-        xfgroup: markGroup,
-        filters: filters
-      });
-
-      checkBoxes(monthSelection, {
-        filterkey: "stockingMonth",
-        xfdim: monthDim,
-        xfgroup: monthGroup,
-        filters: filters
-      });
-
-      checkBoxes(stkMethSelection, {
-        filterkey: "stkMeth",
-        xfdim: stkMethDim,
-        xfgroup: stkMethGroup,
-        filters: filters
-      });
-
-      checkBoxes(lifeStageSelection, {
-        filterkey: "lifeStage",
-        xfdim: lifeStageDim,
-        xfgroup: lifeStageGroup,
-        filters: filters
-      });
-
-
-    });
-
-    const ptAccessor = d => Object.keys(d.value).map(x => d.value[x].events);
-
-
-
-      const get_coordinates = pt => {
-          let coords = pt.slice(pt.indexOf('(') + 1 ,pt.indexOf(')'))
-              .split(' ');
-          return [parseFloat(coords[0]), parseFloat(coords[1])];
-      };
-
+    const get_coordinates = pt => {
+      let coords = pt.slice(pt.indexOf('(') + 1 ,pt.indexOf(')'))
+        .split(' ');
+      return [parseFloat(coords[0]), parseFloat(coords[1])];
+    };
 
 
     // a helper function to get the data in the correct format for plotting.
@@ -369,42 +276,42 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       let pts;
 
       switch (spatialUnit) {
-        case "lake":
-          pts = Object.values(lakeMapGroup.all());
-          break;
-        case "stateProv":
-          pts = Object.values(stateProvMapGroup.all());
-          break;
-        case "jurisdiction":
-          pts = Object.values(jurisdictionMapGroup.all());
-          break;
-        case "mu":
-          pts = Object.values(manUnitMapGroup.all());
-          break;
-        case "grid10":
-          pts = Object.values(grid10MapGroup.all());
-          break;
-        case "geom":
-          pts = Object.values(geomMapGroup.all());
-          break;
+      case 'lake':
+        pts = Object.values(lakeMapGroup.all());
+        break;
+      case 'stateProv':
+        pts = Object.values(stateProvMapGroup.all());
+        break;
+      case 'jurisdiction':
+        pts = Object.values(jurisdictionMapGroup.all());
+        break;
+      case 'mu':
+        pts = Object.values(manUnitMapGroup.all());
+        break;
+      case 'grid10':
+        pts = Object.values(grid10MapGroup.all());
+        break;
+      case 'geom':
+        pts = Object.values(geomMapGroup.all());
+        break;
       }
 
-     if (spatialUnit === "geom") {
-         pts.forEach(d => (d["coordinates"] = get_coordinates(d.key)));
-     } else {
-        pts.forEach(d => (d["coordinates"] = centroids[spatialUnit][d.key]));
-     }
-      pts.forEach(d => (d["total"] = sum(ptAccessor(d))));
-      return pts;
-    };
+      if (spatialUnit === 'geom') {
+        pts.forEach(d => (d['coordinates'] = get_coordinates(d.key)));
+      } else {
+        pts.forEach(d => (d['coordinates'] = centroids[spatialUnit][d.key]));
+      }
+      pts.forEach(d => (d['total'] = sum(ptAccessor(d))));
 
-    let pts = get_pts(spatialUnit, centroids, ptAccessor);
+      return pts.filter(d=>d.total > 0);
+    };
 
 
     overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
+    let pts = get_pts(spatialUnit, centroids, ptAccessor);
     svg.data([pts]).call(overlay);
 
-    spatial_resolution.on("change", function() {
+    spatial_resolution.on('change', function() {
       // when the radio buttons change, we and to update the selected
       // saptial strata and refesh the map
       spatialUnit = this.value;
@@ -412,5 +319,105 @@ Promise.all([json(dataURL), json("data/centroids.json")]).then(
       svg.data([pts]).call(overlay);
       //refreshMap(spatial_xfDims);
     });
+
+
+
+
+
+    // if the crossfilter changes, update our checkboxes:
+    ndx.onChange(() => {
+
+      update_stats_panel(all);
+
+      checkBoxes(lakeSelection, {
+        filterkey: 'lake',
+        xfdim: lakeDim,
+        xfgroup: lakeGroup,
+        filters: filters
+      });
+
+      checkBoxes(stateProvSelection, {
+        filterkey: 'stateProv',
+        xfdim: stateProvDim,
+        xfgroup: stateProvGroup,
+        filters: filters
+      });
+
+      checkBoxes(jurisdictionSelection, {
+        filterkey: 'jurisdiction',
+        xfdim: jurisdictionDim,
+        xfgroup: jurisdictionGroup,
+        filters: filters
+      });
+
+      checkBoxes(manUnitSelection, {
+        filterkey: 'manUnit',
+        xfdim: manUnitDim,
+        xfgroup: manUnitGroup,
+        filters: filters
+      });
+
+      checkBoxes(agencySelection, {
+        filterkey: 'agency',
+        xfdim: agencyDim,
+        xfgroup: agencyGroup,
+        filters: filters
+      });
+
+      checkBoxes(speciesSelection, {
+        filterkey: 'species',
+        xfdim: speciesDim,
+        xfgroup: speciesGroup,
+        filters: filters
+      });
+
+      checkBoxes(strainSelection, {
+        filterkey: 'strain',
+        xfdim: strainDim,
+        xfgroup: strainGroup,
+        filters: filters
+      });
+
+      checkBoxes(yearClassSelection, {
+        filterkey: 'yearClass',
+        xfdim: yearClassDim,
+        xfgroup: yearClassGroup,
+        filters: filters
+      });
+
+      checkBoxes(markSelection, {
+        filterkey: 'mark',
+        xfdim: markDim,
+        xfgroup: markGroup,
+        filters: filters
+      });
+
+      checkBoxes(monthSelection, {
+        filterkey: 'stockingMonth',
+        xfdim: monthDim,
+        xfgroup: monthGroup,
+        filters: filters
+      });
+
+      checkBoxes(stkMethSelection, {
+        filterkey: 'stkMeth',
+        xfdim: stkMethDim,
+        xfgroup: stkMethGroup,
+        filters: filters
+      });
+
+      checkBoxes(lifeStageSelection, {
+        filterkey: 'lifeStage',
+        xfdim: lifeStageDim,
+        xfgroup: lifeStageGroup,
+        filters: filters
+      });
+
+        //update our map too:
+        let pts = get_pts(spatialUnit, centroids, ptAccessor);
+        svg.data([pts]).call(overlay);
+
+    });
+
   }
 );
