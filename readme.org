@@ -1,6 +1,8 @@
-* Creating dynamic check boxes with d3 and crossfilter2
+* Creating dynamic pie charts on a map using d3 and crossfilter
 
-This little project is a demonstration of how dynamic check boxes can
-be created (or destroyed) to reflect currently available dimensions in
-a crossfilter2 object. They function essentially the same as plots
-created using dc.js but with check boxes.
+This little project is part of a larger project to visualize great
+lakes fish stocking data. This project is in support of a widget, or
+dashboard that will display stocking data as interactive pie charts
+that can be filtered, aggregated, or split by user. This is not
+intended to be a stand alone project, but will be integrated into the
+larger application.
