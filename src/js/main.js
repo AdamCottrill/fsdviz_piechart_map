@@ -413,9 +413,9 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
         filters: filters
       });
 
-        //update our map too:
-        let pts = get_pts(spatialUnit, centroids, ptAccessor);
-        svg.data([pts]).call(overlay);
+      //update our map too:
+      let pts = get_pts(spatialUnit, centroids, ptAccessor);
+      svg.data([pts]).call(overlay);
 
     });
 

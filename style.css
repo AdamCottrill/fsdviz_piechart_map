@@ -25,6 +25,9 @@ svg {
     stroke-width: 2;
 }
 
+tr.error {
+  font-weight: 900;
+}
 
 
 .highlighted {
@@ -37,11 +40,19 @@ svg {
     opacity: 0.65;
     stroke: grey;
     stroke-width: 1;
+    cursor: auto;
 
 }
 
 .arc:hover {
-    stroke: black;
+    stroke: darkgray;
     opacity: 0.85;
+    cursor: pointer;
     stroke-width: 1.3;
+}
+
+.selected > .arc {
+    stroke: black;
+    opacity: 1.0;
+    stroke-width: 1.5;
 }
