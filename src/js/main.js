@@ -12,7 +12,6 @@ import { mapbox_overlay } from './mapbox_overlay';
 import { spatialRadioButtons } from './RadioButtons';
 import { update_stats_panel } from './stats_panel';
 
-
 const log = debug('app:log');
 
 if (ENV !== 'production') {
@@ -55,12 +54,10 @@ map.on('move', function() {
 
 const filters = {};
 
-
 const column = 'events';
 // the name of the columnwith our response:
 const responseVar = 'yreq';
 //const responseVar = 'events';
-
 
 // radio buttons
 let strata = [
@@ -89,7 +86,9 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
 
     let ndx = crossfilter(data);
 
-    let all = ndx.groupAll().reduce(stockingAdd, stockingRemove, stockingInitial);
+    let all = ndx
+      .groupAll()
+      .reduce(stockingAdd, stockingRemove, stockingInitial);
 
     let lakeDim = ndx.dimension(d => d.lake);
     let agencyDim = ndx.dimension(d => d.agency_abbrev);
@@ -149,7 +148,6 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       .reduce(stockingAdd, stockingRemove, stockingInitial);
 
     update_stats_panel(all);
-
 
     //ininitialize our filters - all checked at first
     initialize_filter(filters, 'lake', lakeDim);
@@ -261,15 +259,13 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       filters: filters
     });
 
-
-    const ptAccessor = d => Object.keys(d.value).map(x => d.value[x][responseVar]);
+    const ptAccessor = d =>
+      Object.keys(d.value).map(x => d.value[x][responseVar]);
 
     const get_coordinates = pt => {
-      let coords = pt.slice(pt.indexOf('(') + 1 ,pt.indexOf(')'))
-        .split(' ');
+      let coords = pt.slice(pt.indexOf('(') + 1, pt.indexOf(')')).split(' ');
       return [parseFloat(coords[0]), parseFloat(coords[1])];
     };
-
 
     // a helper function to get the data in the correct format for plotting.
     const get_pts = (spatialUnit, centriods, ptAccessor) => {
@@ -303,9 +299,8 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       }
       pts.forEach(d => (d['total'] = sum(ptAccessor(d))));
 
-      return pts.filter(d=>d.total > 0);
+      return pts.filter(d => d.total > 0);
     };
-
 
     overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
     let pts = get_pts(spatialUnit, centroids, ptAccessor);
@@ -320,13 +315,8 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       //refreshMap(spatial_xfDims);
     });
 
-
-
-
-
     // if the crossfilter changes, update our checkboxes:
     ndx.onChange(() => {
-
       update_stats_panel(all);
 
       checkBoxes(lakeSelection, {
@@ -416,8 +406,6 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       //update our map too:
       let pts = get_pts(spatialUnit, centroids, ptAccessor);
       svg.data([pts]).call(overlay);
-
     });
-
   }
 );

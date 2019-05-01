@@ -164,9 +164,9 @@
                     <div class="content">
                       <p>Summary Statstics:</p>
                       <ul>
-                          <li><span id="total-stocked"></span> Fish</li>
-                          <li><span id="yreq-stocked"></span> Yearling Equiv.</li>
-                          <li><span id="event-count"></span> Events</li>
+                        <li><span id="total-stocked"></span> Fish</li>
+                        <li><span id="yreq-stocked"></span> Yearling Equiv.</li>
+                        <li><span id="event-count"></span> Events</li>
                         <li><span id="species-count"></span> Species</li>
                       </ul>
 
@@ -203,24 +203,19 @@
       </div>
     </div>
 
-
-
-
-
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
 
     <script type="text/javascript">
       const dataURL =
-        "http://127.0.0.1:8000/api/v1/stocking/mapdata/events/2012/";
+        "http://127.0.0.1:8000/api/v1/stocking/mapdata/events/2013/";
 
       const bbox = [-92.094, 41.3808, -76.0591, 49.0158];
 
       let spatialUnit = "jurisdiction";
-     let what = "species_name";
-     let selected;
+      let what = "species_name";
+      let selected;
     </script>
 
     <script type="text/javascript" src="crossfiltermap.js"></script>

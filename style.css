@@ -56,3 +56,8 @@ tr.error {
     opacity: 1.0;
     stroke-width: 1.5;
 }
+
+.tooltip {
+    position:fixed;
+   z-index:1000;
+}
