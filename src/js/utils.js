@@ -1,13 +1,12 @@
-
 // a function to prepare the json stocking data for use in our map
 export const prepare_stocking_data = data => {
   data.point = [+data.dd_lon, +data.dd_lat];
-  data.geom = 'Point(' + data.dd_lon + ' ' + data.dd_lat + ')';
+  data.geom = "Point(" + data.dd_lon + " " + data.dd_lat + ")";
   data.total_stocked = +data.total_stocked;
-  data.year_class = data.year_class ? data.year_class + '' : 'Unkn';
+  data.year_class = data.year_class ? data.year_class + "" : "Unkn";
   data.yreq = +data.yreq;
-  data.mark = data.mark ? data.mark : 'None';
-  data.month = data.month ? data.month + '' : '0';
+  data.mark = data.mark ? data.mark : "None";
+  data.month = data.month ? data.month + "" : "0";
 };
 
 // a funciton to add an element to our filter registry for a dimension
@@ -20,8 +19,6 @@ export const initialize_filter = (filters, key, dim) => {
     .map(d => d.key);
   dim.filter(val => filters[key].indexOf(val) > -1);
 };
-
-
 
 //
 //export const update_summary_table = data => {

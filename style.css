@@ -15,6 +15,23 @@
     height: 700px;
 }
 
+
+.geopath  {
+    fill: #cceeff;
+    stroke: #0088ff;
+    stroke-width: 0.5px;
+    opacity: 0.25;
+}
+
+.highlighted-geom {
+    fill: #ffcc99;
+    stroke: #ff00ff;
+    opacity: 0.45;
+    cursor: pointer;
+}
+
+.lake_breadcrumb, .jurisdiction_breadcrumb, .manunit_breadcrumb {visibility: hidden}
+
 .species-name {
   text-transform: capitalize;
   }
@@ -33,6 +50,7 @@ tr.error {
 .highlighted {
     fill: #ffcc99;
     stroke: #ff00ff;
+
 }
 
 
@@ -60,7 +78,7 @@ tr.error {
 .tooltip {
 
  position: absolute;
-/* visibility: hidden; */
+ visibility: hidden;
 background-color: white;
 border: solid;
 border-width: 1px;
