@@ -69,40 +69,10 @@ export const mapbox_overlay = map => {
 
     html += "</table>";
     return html;
-
-    //
-    //  let commaFormat = d3.format(',d');
-    //
-    //  let fish = commaFormat(d.stats.total);
-    //  let events = commaFormat(d.stats.events);
-    //
-    //
-    //  let html  =`<div class="ui card">
-    //  <div class="content">
-    //      <div class="header">${d.value}</div>
-    //  </div>
-    //  <div class="content">
-    //      <div class="ui small feed">
-    //          <div class="event">
-    //              <div class="content">
-    //                  <ul>
-    //                      <li>${fish} Fish</li>
-    //                      <li>${events} Events</li>
-    //                  </ul>
-    //        </div>
-    //                </div>
-    //            </div>
-    //    </div>`;
-    //
-    //  return html;
   };
 
   const chart = function(selection) {
     selection.each(function(data) {
-      //const radiusScale = scaleSqrt()
-      // .range([0, maxCircleSize])
-      //  .domain([0, max(data, radiusAccessor)]);
-
       let colourScale = scaleOrdinal(schemeCategory10);
 
       // prepare data for pie:
@@ -126,33 +96,12 @@ export const mapbox_overlay = map => {
 
       let fillScale = scaleOrdinal(fillColours).domain(fillcategories);
 
-      // Define the div for the tooltip
-      var div = selection
+      // create a tooltip
+      var tooltip = select("#map")
         .append("div")
         .attr("class", "tooltip")
-        .style("display", "inline")
-        .style("z-index", "1000")
-        .style("opacity", 0);
-
-      var tooltip = selection
-        .append("g")
-        .attr("class", "tooltip")
-        .style("display", "none");
-
-      tooltip
-        .append("g:rect")
-        .attr("width", 120)
-        .attr("height", 20)
-        .attr("fill", "white")
-        .style("opacity", 1);
-
-      tooltip
-        .append("g:text")
-        .attr("x", 30)
-        .attr("y", "1.2em")
-        .style("text-anchor", "middle")
-        .attr("font-size", "12px")
-        .attr("font-weight", "bold");
+        .style("pointer-events", "none")
+        .html("<p>Tool-tip</p>");
 
       //==========================================================
       //             PIE CHARTS
@@ -176,21 +125,6 @@ export const mapbox_overlay = map => {
         .enter()
         .append("g")
         .attr("class", "pie")
-        //          .on( 'mouseover', function (d) {
-        //            select(this).classed('hover', true);
-        //            //console.log('d = ', d);
-        //            // if nothing selected show the info for this pie
-        //            //if (!myMap.selected) {
-        //            //  select('#point-info').html(myMap.pointInfo(d));
-        //            //}
-        //          })
-        //          .on( 'mouseout', function (d) {
-        //            select(this).classed('hover', false);
-        //            // if nothing selected delete the info for this pie
-        //            //if (!myMap.selected) {
-        //            //  select('#point-info').html('');
-        //            //}
-        //          })
         .on("click", function(d) {
           if (selected && selected === d.key) {
             // second click on same circle, turn off selected and make point info empty:
@@ -221,11 +155,8 @@ export const mapbox_overlay = map => {
       function onePie(d) {
         const highlight_row = (d, bool) => {
           let selector = "#tr-" + d.data.slice.replace(" ", "-");
-          //console.log('selector = ', selector);
           let tmp = selectAll(selector);
           tmp.classed("error", bool);
-
-          //console.log('tmp = ', tmp);
         };
 
         let r = radiusScale(d.total);
@@ -248,38 +179,19 @@ export const mapbox_overlay = map => {
               highlight_row(d, true);
               //select('#point-info').html(get_sliceInfo(d));
             }
-
-            var xPosition = event.layerX;
-            var yPosition = event.layerY;
             tooltip
-              .style("display", "inline")
-              .attr(
-                "transform",
-                "translate(" + xPosition + "," + yPosition + ")"
-              );
-            tooltip
-              .select("text")
-              .text(d.data.slice + ": " + commaFormat(d.data.value));
-
-            //            div.transition()
-            //              .duration(200)
-            //              .style("opacity", 0.9);
-            //            div.html(d.data.slice + ': ' + commaFormat(d.data.value))
-            //              .style("left", "50px")
-            //              .style("top", "-50px");
-
-            //.style("left", (event.pageX) + "px")
-            //.style("top", (event.pageY - 28) + "px");
+              .style("visibility", "visible")
+              .html(d.data.slice + ": " + commaFormat(d.data.value));
+          })
+          .on("mousemove", function() {
+            return tooltip
+              .style("top", event.layerY + "px")
+              .style("left", event.layerX + "px");
           })
           .on("mouseout", function(d) {
             select(this).classed("hover", false);
             highlight_row(d, false);
-
-            tooltip.style("display", "none");
-
-            //            div.transition()
-            //              .duration(200)
-            //              .style("opacity", 0);
+            tooltip.style("visibility", "hidden").html("");
           });
 
         slices
@@ -289,46 +201,6 @@ export const mapbox_overlay = map => {
 
         slices.exit().remove();
       }
-
-      //
-      //      let dots = selection.selectAll('circle').data(data, d => d[keyfield]);
-      //
-      //      dots.exit().remove();
-      //
-      //      const dotsEnter = dots
-      //        .enter()
-      //        .append('circle')
-      //        .attr('class', 'stockingEvent')
-      //        .attr('r', d => radiusScale(radiusAccessor(d)))
-      //        .attr('fill', d => fillScale(fillAccessor(d)))
-      //        .on('click', function(d) {
-      //          if (selected_event && selected_event === d[keyfield]) {
-      //            // second click on same circle, turn off selected and make point info empty:
-      //            selected_event = null;
-      //            select(pointInfoSelector).html('');
-      //            selectAll('.selected').classed('selected', false);
-      //          } else {
-      //            // set selected, fill in map info and highlight our selected pie
-      //
-      //            selected_event = d[keyfield];
-      //            select(pointInfoSelector).html(get_pointInfo(d));
-      //            selectAll('.selected').classed('selected', false);
-      //            select(this).classed('selected', true);
-      //          }
-      //        })
-      //        .on('mouseover', function(d) {
-      //          select(this).classed('hover', true);
-      //        })
-      //        .on('mouseout', function(d) {
-      //          select(this).classed('hover', false);
-      //        });
-      //
-      //      dots
-      //        .merge(dotsEnter)
-      //        .attr('cx', d => mapboxProjection(d.coordinates)[0])
-      //            .attr('cy', d => mapboxProjection(d.coordinates)[1]);
-      //
-      //
     });
   };
 
