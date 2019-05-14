@@ -1,14 +1,20 @@
+/* global accessToken */
+
 import debug from 'debug';
 
-import { selectAll, json, tsv, select, sum } from 'd3';
+import { selectAll, json, tsv, select, sum, geoPath, geoTransform } from 'd3';
+
 import crossfilter from 'crossfilter2';
+
+//import * as L from "leaflet";
+import Leaflet from 'leaflet';
 
 import { checkBoxes } from './checkBoxArray';
 
 import { prepare_stocking_data, initialize_filter } from './utils';
 import { stockingAdd, stockingRemove, stockingInitial } from './reducers';
 
-import { mapbox_overlay } from './mapbox_overlay';
+import { piechart_overlay } from './piechart_overlay';
 import { spatialRadioButtons } from './RadioButtons';
 import { update_stats_panel } from './stats_panel';
 
@@ -22,35 +28,51 @@ if (ENV !== 'production') {
   debug.disable();
 }
 
-//let mapBounds = pgbbox_corners(pgbbox);
-let mapBounds = [bbox.slice(0, 2), bbox.slice(2)];
+// lat-lon for leaflet:
+let mapBounds = [[bbox[1], bbox[0]], [bbox[3], bbox[2]]];
 
-mapboxgl.accessToken =
-  'pk.eyJ1IjoiYWNvdHRyaWxsIiwiYSI6ImNpazVmb3Q2eDAwMWZpZm0yZTQ1cjF3NTkifQ.Pb1wCYs0lKgjnTGz43DjVQ';
+const mymap = Leaflet.map('mapid', {
+  zoomDelta: 0.25,
+  zoomSnap: 0
+}).fitBounds(
+  //    bb_points(basin_bbox)
+  mapBounds
+);
 
-//Setup mapbox-gl map
-let map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/streets-v11',
-  //center: [-81.857221, 45.194331],
-  //zoom: 7,
-  bounds: mapBounds
+Leaflet.tileLayer(
+  'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
+  {
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery � <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    id: 'mapbox.streets',
+    accessToken: accessToken
+  }
+).addTo(mymap);
+
+//// Add a svg layer to the map
+Leaflet.svg().addTo(mymap);
+//
+//// Select the svg area and add a group element we can use to move things around:
+let svg = select('#mapid').select('svg');
+
+let mapg = svg.append('g');
+
+function projectPoint(x, y) {
+  const point = mymap.latLngToLayerPoint(new Leaflet.LatLng(y, x));
+  return point;
+}
+
+const transform = geoTransform({ point: projectPoint });
+const geoPathGenerator = geoPath().projection(transform);
+
+let overlay = piechart_overlay(mymap).getProjection(projectPoint);
+
+mymap.on('moveend', function() {
+  mapg.call(overlay);
 });
 
-map.addControl(new mapboxgl.NavigationControl());
-
-//Setup our svg layer that we can manipulate with d3
-let container = map.getCanvasContainer();
-let svg = select(container).append('svg');
-
-let overlay = mapbox_overlay(map);
-// re-render our visualization whenever the view changes
-map.on('viewreset', function() {
-  svg.call(overlay);
-});
-map.on('move', function() {
-  svg.call(overlay);
-});
+//======================================================
 
 const filters = {};
 
@@ -264,7 +286,7 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
 
     const get_coordinates = pt => {
       let coords = pt.slice(pt.indexOf('(') + 1, pt.indexOf(')')).split(' ');
-      return [parseFloat(coords[0]), parseFloat(coords[1])];
+      return [parseFloat(coords[1]), parseFloat(coords[0])];
     };
 
     // a helper function to get the data in the correct format for plotting.
@@ -302,16 +324,16 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
       return pts.filter(d => d.total > 0);
     };
 
-    overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
+    //overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
     let pts = get_pts(spatialUnit, centroids, ptAccessor);
-    svg.data([pts]).call(overlay);
+    mapg.data([pts]).call(overlay);
 
     spatial_resolution.on('change', function() {
       // when the radio buttons change, we and to update the selected
       // saptial strata and refesh the map
       spatialUnit = this.value;
       pts = get_pts(spatialUnit, centroids, ptAccessor);
-      svg.data([pts]).call(overlay);
+      mapg.data([pts]).call(overlay);
       //refreshMap(spatial_xfDims);
     });
 
@@ -405,7 +427,7 @@ Promise.all([json(dataURL), json('data/centroids.json')]).then(
 
       //update our map too:
       let pts = get_pts(spatialUnit, centroids, ptAccessor);
-      svg.data([pts]).call(overlay);
+      mapg.data([pts]).call(overlay);
     });
   }
 );

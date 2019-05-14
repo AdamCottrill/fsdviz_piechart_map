@@ -9,15 +9,10 @@
 }
 
 
-#map {
+#mapid {
     position:realtive;
     width: 100%;
     height: 700px;
-}
-svg {
-    position: absolute;
-    width: 100%;
-    height: 100%;
 }
 
 .species-name {
@@ -64,8 +59,8 @@ tr.error {
 
 .tooltip {
 
-position: absolute;
-visibility: hidden;
+ position: absolute;
+/* visibility: hidden; */
 background-color: white;
 border: solid;
 border-width: 1px;
@@ -73,3 +68,9 @@ border-radius: 5px;
 padding: 10px;
 
 }
+
+/* .tooltip {  */
+/*      position: absolute;  */
+/*      width: 100%;  */
+/*      height: 100%;  */
+/*  } */
