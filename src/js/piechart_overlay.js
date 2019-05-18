@@ -13,14 +13,17 @@ import {
   scaleOrdinal,
   format,
   schemeCategory10
-} from 'd3';
+} from "d3";
 
-export const piechart_overlay = map => {
+export const piechart_overlay = () => {
   // default values:
 
   let radiusAccessor = d => d.total;
   let fillAccessor = d => d.value;
-  let responseVar = 'yreq';
+  let responseVar = "yreq";
+
+  let selectedPie;
+  let data;
 
   let maxCircleSize = 70;
   let fillColours = schemeCategory10;
@@ -30,12 +33,12 @@ export const piechart_overlay = map => {
     .sort(null)
     .value(fillAccessor);
 
-  const commaFormat = format(',d');
+  const commaFormat = format(",d");
 
   // the name of the field that uniquely identifies each point:
-  let keyfield = 'geom';
+  let keyfield = "geom";
 
-  let pointInfoSelector = '#point-info';
+  let pointInfoSelector = "#point-info";
 
   // we will pass in a function to transform lat-long to screen coordinates
   // when we instantiate the overlay
@@ -54,13 +57,13 @@ export const piechart_overlay = map => {
     dataArray
       .filter(d => d.value > 0)
       .forEach(row => {
-        html += `<tr id="tr-${row.slice.replace(' ', '-')}">
+        html += `<tr id="tr-${row.slice.replace(" ", "-")}">
            <td class="species-name">${row.slice}</td>
            <td class="right aligned">${commaFormat(row.value)}</td>
        </tr>`;
       });
 
-    html += '</table>';
+    html += "</table>";
     return html;
   };
 
@@ -80,7 +83,7 @@ export const piechart_overlay = map => {
           slice: d,
           value: x.value[d][responseVar]
         }));
-        x['values'] = values;
+        x["values"] = values;
       });
 
       // our fill categories will always be determined by the
@@ -90,13 +93,13 @@ export const piechart_overlay = map => {
       let fillScale = scaleOrdinal(fillColours).domain(fillcategories);
 
       // create a tooltip
-      var tooltip = select('#mapid')
-        .append('div')
-        .attr('class', 'tooltip')
-        .attr('id', 'pie-tooltip')
-        .style('pointer-events', 'none')
-        .style('z-index', '999')
-        .html('<p>Tool-tip</p>');
+      var tooltip = select("#mapid")
+        .append("div")
+        .attr("class", "tooltip")
+        .attr("id", "pie-tooltip")
+        .style("pointer-events", "none")
+        .style("z-index", "999")
+        .html("<p>Tool-tip</p>");
 
       //==========================================================
       //             PIE CHARTS
@@ -108,7 +111,7 @@ export const piechart_overlay = map => {
         .range([1, maxCircleSize])
         .domain([0, max(data, radiusAccessor)]);
 
-      let pies = selection.selectAll('.pie').data(data, d => d.key);
+      let pies = selection.selectAll(".pie").data(data, d => d.key);
 
       pies
         .exit()
@@ -118,26 +121,26 @@ export const piechart_overlay = map => {
 
       let piesEnter = pies
         .enter()
-        .append('g')
-        .attr('class', 'pie')
-        .on('click', function(d) {
-          if (selected && selected === d.key) {
-            // second click on same circle, turn off selected and make point info empty:
-            selected = null;
-            select('#point-info').html('');
-            selectAll('.selected').classed('selected', false);
+        .append("g")
+        .attr("class", "pie")
+        .on("click", function(d) {
+          if (selectedPie && selectedPie === d.key) {
+            // second click on same circle, turn off selectedPie and make point info empty:
+            selectedPie = null;
+            select("#point-info").html("");
+            selectAll(".selectedPie").classed("selected-pie", false);
           } else {
-            // set selected, fill in map info and highlight our selected pie
-            selected = d.key;
-            select('#point-info').html(get_pointInfo(d));
-            selectAll('.selected').classed('selected', false);
-            select(this).classed('selected', true);
+            // set selectedPie, fill in map info and highlight our selectedPie pie
+            selectedPie = d.key;
+            select("#point-info").html(get_pointInfo(d));
+            selectAll(".selectedPie").classed("selected-pie", false);
+            select(this).classed("selected-pie", true);
           }
         });
 
       pies
         .merge(piesEnter)
-        .attr('transform', function(d) {
+        .attr("transform", function(d) {
           let translate = getProjection(d.coordinates[0], d.coordinates[1]);
           return `translate( ${translate.x}  ${translate.y} )`;
         })
@@ -146,53 +149,53 @@ export const piechart_overlay = map => {
         .each(onePie);
 
       // a function that represents one pie chart. Repeated for each
-      // elements selected above
+      // elements selectedPie above
       function onePie(d) {
         const highlight_row = (d, bool) => {
-          let selector = '#tr-' + d.data.slice.replace(' ', '-');
+          let selector = "#tr-" + d.data.slice.replace(" ", "-");
           let tmp = selectAll(selector);
-          tmp.classed('error', bool);
+          tmp.classed("error", bool);
         };
 
         let r = radiusScale(d.total);
 
         let svg = select(this)
-          .attr('width', r * 2)
-          .attr('height', r * 2);
+          .attr("width", r * 2)
+          .attr("height", r * 2);
 
         let slices = svg
-          .selectAll('.arc')
+          .selectAll(".arc")
           .data(d => myPie(d.values), d => d.index);
 
         let slicesEnter = slices
           .enter()
-          .append('path')
-          .attr('class', 'arc')
-          .on('mouseover', function(d) {
-            select(this).classed('hover', true);
-            if (selected) {
+          .append("path")
+          .attr("class", "arc")
+          .on("mouseover", function(d) {
+            select(this).classed("hover", true);
+            if (selectedPie) {
               highlight_row(d, true);
               //select('#point-info').html(get_sliceInfo(d));
             }
             tooltip
-              .style('visibility', 'visible')
-              .html(d.data.slice + ': ' + commaFormat(d.data.value));
+              .style("visibility", "visible")
+              .html(d.data.slice + ": " + commaFormat(d.data.value));
           })
-          .on('mousemove', function() {
+          .on("mousemove", function() {
             return tooltip
-              .style('top', event.layerY + 'px')
-              .style('left', event.layerX + 'px');
+              .style("top", event.layerY + "px")
+              .style("left", event.layerX + "px");
           })
-          .on('mouseout', function(d) {
-            select(this).classed('hover', false);
+          .on("mouseout", function(d) {
+            select(this).classed("hover", false);
             highlight_row(d, false);
-            tooltip.style('visibility', 'hidden').html('');
+            tooltip.style("visibility", "hidden").html("");
           });
 
         slices
           .merge(slicesEnter)
-          .attr('d', myArc.outerRadius(r))
-          .style('fill', d => colourScale(d.data.slice));
+          .attr("d", myArc.outerRadius(r))
+          .style("fill", d => colourScale(d.data.slice));
 
         slices.exit().remove();
       }
@@ -249,7 +252,7 @@ export const piechart_overlay = map => {
   };
 
   // the function that populates point infor div with information
-  // about the selected point
+  // about the selectedPie point
   chart.get_pointInfo = function(value) {
     if (!arguments.length) return get_pointInfo;
     get_pointInfo = value;

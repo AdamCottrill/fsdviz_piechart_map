@@ -11,7 +11,7 @@ export const checkBoxes = (selection, props) => {
 
   let myfilters = filters[filterkey];
 
-  let keys = xfgroup.top('Infinity').filter(d => d.value > 0);
+  let keys = xfgroup.top("Infinity").filter(d => d.value > 0);
   keys.sort((a, b) => a.key - b.key);
 
   // an object to contain the checkbox status for each checkbox
@@ -23,63 +23,63 @@ export const checkBoxes = (selection, props) => {
   // use d3 to create our checkboxes:
   let cbarray = selection
     .enter()
-    .append('div')
+    .append("div")
     .merge(selection);
 
   let clearAll = cbarray
-    .selectAll('.clear-link')
+    .selectAll(".clear-link")
     .data([null])
     .enter()
-    .append('a')
-    .attr('class', 'clear-link')
-    .attr('href', '#')
-    .text('Clear All')
-    .on('click', function() {
+    .append("a")
+    .attr("class", "clear-link")
+    .attr("href", "#")
+    .text("Clear All")
+    .on("click", function() {
       let checkboxes = cbarray
-        .selectAll('input[type=checkbox]')
-        .property('checked', false);
+        .selectAll("input[type=checkbox]")
+        .property("checked", false);
       filters[filterkey] = [];
       xfdim.filter();
     });
 
   let selectAll = cbarray
-    .selectAll('.select-link')
+    .selectAll(".select-link")
     .data([null])
     .enter()
-    .append('a')
-    .attr('class', 'select-link')
-    .attr('href', '#')
-    .classed('ui right floated', true)
-    .text('Select All')
-    .on('click', function() {
+    .append("a")
+    .attr("class", "select-link")
+    .attr("href", "#")
+    .classed("ui right floated", true)
+    .text("Select All")
+    .on("click", function() {
       let checkboxes = cbarray
-        .selectAll('input[type=checkbox]')
-        .property('checked', true);
+        .selectAll("input[type=checkbox]")
+        .property("checked", true);
       filters[filterkey] = keys.map(d => d.key);
       xfdim.filter(val => myfilters.indexOf(val) > -1);
     });
 
-  let boxes = cbarray.selectAll('div').data(keys, d => d.key);
+  let boxes = cbarray.selectAll("div").data(keys, d => d.key);
 
   boxes.exit().remove();
 
   let boxesEnter = boxes
     .enter()
-    .append('div')
-    .attr('class', 'inline field');
+    .append("div")
+    .attr("class", "inline field");
 
   boxesEnter = boxesEnter.merge(boxes);
 
-  let uiCheckbox = boxesEnter.append('div').attr('class', 'checkbox');
+  let uiCheckbox = boxesEnter.append("div").attr("class", "checkbox");
 
   uiCheckbox
-    .append('input')
-    .attr('type', 'checkbox')
-    .property('checked', d => {
+    .append("input")
+    .attr("type", "checkbox")
+    .property("checked", d => {
       return checkbox_map[d.key];
     })
-    .attr('value', d => d.key)
-    .on('click', function() {
+    .attr("value", d => d.key)
+    .on("click", function() {
       if (this.checked) {
         // add the value that was just selected.
         myfilters.push(this.value);
@@ -91,5 +91,5 @@ export const checkBoxes = (selection, props) => {
       xfdim.filter(val => myfilters.indexOf(val) > -1);
     });
 
-  uiCheckbox.append('filterkey').text(d => d.key + ' (n=' + d.value + ')');
+  uiCheckbox.append("filterkey").text(d => d.key + " (n=" + d.value + ")");
 };

@@ -1,20 +1,10 @@
-/* global accessToken */
+/* global accessToken,  dataURL */
 
 import debug from "debug";
 
 import crossfilter from "crossfilter2";
-import {
-  selectAll,
-  json,
-  select,
-  sum,
-  geoPath,
-  geoTransform,
-  min,
-  max
-} from "d3";
+import { selectAll, json, select, sum } from "d3";
 
-import bbox from "@turf/bbox";
 import Leaflet from "leaflet";
 
 import { checkBoxes } from "./checkBoxArray";
@@ -23,6 +13,7 @@ import { prepare_stocking_data, initialize_filter } from "./utils";
 import { stockingAdd, stockingRemove, stockingInitial } from "./reducers";
 
 import { piechart_overlay } from "./piechart_overlay";
+import { polygon_overlay } from "./polygon_overlay";
 import { spatialRadioButtons } from "./RadioButtons";
 import { update_stats_panel } from "./stats_panel";
 
@@ -35,10 +26,6 @@ if (ENV !== "production") {
 } else {
   debug.disable();
 }
-
-// variables to keep track of currently selected object and spatial scale
-let spatialScale = "basin";
-let selectedGeom;
 
 // setup the map with rough bounds (need to get pies to plot first,
 // this will be tweaked later):
@@ -58,30 +45,35 @@ Leaflet.tileLayer(
   }
 ).addTo(mymap);
 
+// intantiation our polygon overlay
+let polygons = polygon_overlay().leafletMap(mymap);
+
 //// Add a svg layer to the map
 Leaflet.svg().addTo(mymap);
 //
 //// Select the svg area and add a group element we can use to move things around:
 let svg = select("#mapid").select("svg");
 
-let mapg = svg.append("g");
+// add two groups to our svg - one four our geometries, one for our pies
+let geomg = svg.append("g").attr("class", "leaflet-zoom-hide");
+let pieg = svg.append("g");
 
-// this fucntion is used for points events (centroids and mouse clicks)
+// this function is used for points events (centroids and mouse clicks)
 function projectPoint(x, y) {
   const point = mymap.latLngToLayerPoint(new Leaflet.LatLng(y, x));
   return point;
 }
 
-// this function is used to draw our polygons:
-function projectPointPath(x, y) {
-  const point = mymap.latLngToLayerPoint(new Leaflet.LatLng(y, x));
-  this.stream.point(point.x, point.y);
-}
-
-const transform = geoTransform({ point: projectPointPath });
-const geoPathGenerator = geoPath().projection(transform);
-
-let overlay = piechart_overlay(mymap).getProjection(projectPoint);
+//// this function is used to draw our polygons:
+//function projectPointPath(x, y) {
+//  const point = mymap.latLngToLayerPoint(new Leaflet.LatLng(y, x));
+//  this.stream.point(point.x, point.y);
+//}
+//
+//const transform = geoTransform({ point: projectPointPath });
+//const geoPathGenerator = geoPath().projection(transform);
+//
+let piecharts = piechart_overlay(mymap).getProjection(projectPoint);
 
 //======================================================
 
@@ -97,7 +89,7 @@ let strata = [
   { strata: "lake", label: "Lake" },
   { strata: "stateProv", label: "State/Province" },
   { strata: "jurisdiction", label: "Jurisdiction" },
-  { strata: "mu", label: "Managment Unit" },
+  { strata: "manUnit", label: "Managment Unit" },
   { strata: "grid10", label: "10-minute Grid" },
   { strata: "geom", label: "Reported Point" }
 ];
@@ -117,245 +109,21 @@ Promise.all([
   json("./data/centroids.json"),
   json("./data/fsdviz.geojson")
 ]).then(([data, centroids, topodata]) => {
-  const lake_features = topojson.feature(topodata, topodata.objects.lakes)
-    .features;
-  const jurisdiction_features = topojson.feature(
-    topodata,
-    topodata.objects.jurisdictions
-  ).features;
-  const manUnit_features = topojson.feature(topodata, topodata.objects.mus)
-    .features;
-
-  // create a lookup array we will use for displaying pretty names for things
-  // identifeid by a slug:
-  let labelLookup = {};
-  lake_features.forEach(
-    d => (labelLookup[d.properties.slug] = d.properties.label)
-  );
-  jurisdiction_features.forEach(
-    d => (labelLookup[d.properties.slug] = d.properties.label)
-  );
-  manUnit_features.forEach(
-    d => (labelLookup[d.properties.slug] = d.properties.label)
-  );
-
-  // turf.union actually onlty takes two polygons - not an arbitrary number.
-  // just use bbox on each lake and get the extents of those:
-  const bboxes = lake_features.map(d => bbox(d));
-  const basin_bbox = [
-    min(bboxes, d => d[0]),
-    min(bboxes, d => d[1]),
-    max(bboxes, d => d[2]),
-    max(bboxes, d => d[3])
-  ];
-
-  // a helper function that will trasform the bounding box from turf.js to
-  // the pair of arrays required by leaflet:
-  const bb_points = bb => [[bb[1], bb[0]], [bb[3], bb[2]]];
-
-  mymap.fitBounds(bb_points(basin_bbox));
-
-  // TODO: - move all of these functions into ./utils.js
-
-  // a funtion used by mouseover events to apply highlighted class to
-  // the selected polygon
-  function highlightGeom() {
-    select(this).classed("highlighted-geom", true);
-    if (spatialScale !== "manunit") {
-      select("#next-unit").text("/ " + labelLookup[this.id]);
-    }
-  }
-
-  // a funtion used by mouseout events to remove teh highlighted class
-  // from the selected polygon
-  function unhighlightGeom() {
-    select(this).classed("highlighted-geom", false);
-    select("#next-unit").text("");
-  }
-
-  // used by click event on our polygon geometries - zoom to the extents
-  // of the selected polygon
-  const zoomToFeature = (what, label) => {
-    if (what !== "manunit") {
-      spatialScale = what;
-      let features = what === "lake" ? lake_features : jurisdiction_features;
-      let feature = features.filter(d => d.properties.label === label)[0];
-      let mybbox = bbox(feature.geometry);
-      selectedGeom = feature.properties.slug;
-      mymap.flyToBounds(bb_points(mybbox));
-
-      // clear the breadcrumbs for levels lower than 'what'
-      clearBreadcrumb("manunit");
-      if (what === "lake") {
-        clearBreadcrumb("jurisdiction");
-      }
-    }
-  };
-
-  // when the breadrumb for a particular scale is clicked,
-  // zoom to its extent
-  function breadCrumbClick() {
-    let what = this.id.split("-")[0];
-    let label = this.text;
-    zoomToFeature(what, label);
-  }
-
-  // when a geometry is clicked, zoom to its extent and add a bread
-  // crumb to the list of existing breadcrumbs. Uses semantic-ui formatting.
-  const addBreadcrumb = (what, label) => {
-    let html = '<div class="divider"> / </div>';
-    html += `<a class="section" id="${what}-breadcrumb-link">${label}</a>`;
-    let selector = `#${what}-breadcrumb`;
-    select(selector).html(html);
-    select(selector + "-link").on("click", breadCrumbClick);
-  };
-
-  // remove the item of the thelist of breadcrumbs that correspond to what
-  const clearBreadcrumb = what => {
-    let selector = `#${what}-breadcrumb`;
-    select(selector).html("");
-  };
-
-  //    LAKES
-  const lakes = mapg
-    .append("g")
-    .selectAll("path")
-    .data(lake_features)
-    .enter()
-    .append("path")
-    .attr("class", "geopath")
-    .classed("lake", true)
-    .attr("id", d => d.properties.slug)
-    .style("visibility", () =>
-      spatialScale === "basin" ? "visible" : "hidden"
-    )
-    .on("mouseover", highlightGeom)
-    .on("mouseout", unhighlightGeom);
-
-  lakes.on("click", function(d) {
-    select(this).classed("highlighted", false);
-    select("#next-unit").text("");
-    selectedGeom = d.properties.slug;
-    spatialScale = "lake";
-    const polygon_bbox = bbox(d.geometry);
-    mymap.flyToBounds(bb_points(polygon_bbox));
-
-    //Update Bread crumb
-    addBreadcrumb(spatialScale, d.properties.label);
-  });
-
-  //    JURISDICTIONS
-  const jurisdictions = mapg
-    .append("g")
-    .selectAll("path")
-    .data(jurisdiction_features)
-    .enter()
-    .append("path")
-    .attr("class", "geopath")
-    .classed("jurisdiction", true)
-    .attr("id", d => d.properties.slug)
-    .on("mouseover", highlightGeom)
-    .on("mouseout", unhighlightGeom);
-
-  jurisdictions.on("click", function(d) {
-    select(this).classed("highlighted", false);
-    select("#next-unit").text("");
-    selectedGeom = d.properties.slug;
-    spatialScale = "jurisdiction";
-    const polygon_bbox = bbox(d.geometry);
-    mymap.flyToBounds(bb_points(polygon_bbox));
-
-    addBreadcrumb(spatialScale, d.properties.label);
-  });
-
-  //    MANAGEMENT UNITS
-  const manUnits = mapg
-    .append("g")
-    .selectAll("path")
-    .data(manUnit_features)
-    .enter()
-    .append("path")
-    .attr("class", "geopath")
-    .classed("manunit", true)
-    .attr("id", d => d.properties.slug)
-    .on("mouseover", highlightGeom)
-    .on("mouseout", unhighlightGeom);
-
-  manUnits.on("click", function(d) {
-    select(this).classed("highlighted", false);
-    select("#next-unit").text("");
-    selectedGeom = d.properties.slug;
-    spatialScale = "manunit";
-    const polygon_bbox = bbox(d.geometry);
-    mymap.flyToBounds(bb_points(polygon_bbox));
-
-    addBreadcrumb(spatialScale, d.properties.label);
-  });
-
-  //=====================================
-  select("#basin-breadcrumb-link").on("click", () => {
-    // when the basin breadcrumb is clicked, set the map to the bounding box for the basin,
-    // set the visibility of the other breadcrumbs to none
-    // set the values for Lake, Jurisdiction, and ManUnit to None as well.
-
-    spatialScale = "basin";
-    selected = "";
-
-    mymap.flyToBounds(bb_points(basin_bbox));
-
-    clearBreadcrumb("manunit");
-    clearBreadcrumb("jurisdiction");
-    clearBreadcrumb("lake");
-  });
-
-  // when we pan or zoom, redraw polygons - which ones are visible
-  //  depends on the currenly selected spatial scale.
-
-  // when we pan or zoom, redraw polygons - which ones are visible
-  //  depends on the currenly selected spatial scale.
-
-  const updateGeoms = () => {
-    lakes
-      .attr("d", geoPathGenerator)
-      .style("visibility", () =>
-        spatialScale === "basin" ? "visible" : "hidden"
-      );
-
-    jurisdictions.attr("d", geoPathGenerator).style("visibility", d => {
-      // we only want to display jurisdiction that are in the selected Lake:
-      if ((spatialScale === "lake") & (d.properties.lake === selectedGeom)) {
-        return "visible";
-      } else {
-        return "hidden";
-      }
-    });
-
-    manUnits.attr("d", geoPathGenerator).style("visibility", d => {
-      // we only want to display management units that are in the
-      // selected jurisdiction or the selected management unit
-      if (
-        ((spatialScale === "jurisdiction") &
-          (d.properties.jurisdiction === selectedGeom)) |
-        (d.properties.slug === selectedGeom)
-      ) {
-        return "visible";
-      } else {
-        return "hidden";
-      }
-    });
-  };
-
-  mymap.on("moveend", function() {
-    updateGeoms();
-    mapg.call(overlay);
-  });
-
-  // prepare our stocking data
+  // prepare our stocking data and set up our cross filters:
   data.forEach(d => prepare_stocking_data(d));
+
+  // load our geometries and call our polygon overlay on the geom group:
+  geomg.datum(topodata).call(polygons);
 
   let ndx = crossfilter(data);
 
   let all = ndx.groupAll().reduce(stockingAdd, stockingRemove, stockingInitial);
+
+  // these are dimensions that will be used by the polygon overlay:
+
+  let lakePolygonDim = ndx.dimension(d => d.lake);
+  let jurisdictionPolygonDim = ndx.dimension(d => d.jurisdiction_slug);
+  let manUnitPolygonDim = ndx.dimension(d => d.man_unit);
 
   let lakeDim = ndx.dimension(d => d.lake);
   let agencyDim = ndx.dimension(d => d.agency_abbrev);
@@ -377,7 +145,7 @@ Promise.all([
   let stateProvGroup = stateProvDim.group().reduceSum(d => d[column]);
   let jurisdictionGroup = jurisdictionDim.group().reduceSum(d => d[column]);
   let manUnitGroup = manUnitDim.group().reduceSum(d => d[column]);
-  let grid10Group = grid10Dim.group().reduceSum(d => d[column]);
+  //let grid10Group = grid10Dim.group().reduceSum(d => d[column]);
   let speciesGroup = speciesDim.group().reduceSum(d => d[column]);
   let strainGroup = strainDim.group().reduceSum(d => d[column]);
   let yearClassGroup = yearClassDim.group().reduceSum(d => d[column]);
@@ -507,6 +275,7 @@ Promise.all([
     filterkey: "stockingMonth",
     xfdim: monthDim,
     xfgroup: monthGroup,
+
     filters: filters
   });
 
@@ -534,7 +303,7 @@ Promise.all([
     return [parseFloat(coords[1]), parseFloat(coords[0])];
   };
 
-  // a helper function to get the data in the correct format for plotting.
+  // a helper function to get the data in the correct format for plotting on the map.
   const get_pts = (spatialUnit, centriods, ptAccessor) => {
     let pts;
 
@@ -548,7 +317,7 @@ Promise.all([
       case "jurisdiction":
         pts = Object.values(jurisdictionMapGroup.all());
         break;
-      case "mu":
+      case "manUnit":
         pts = Object.values(manUnitMapGroup.all());
         break;
       case "grid10":
@@ -569,16 +338,62 @@ Promise.all([
     return pts.filter(d => d.total > 0);
   };
 
-  //overlay.radiusAccessor(d => d.total).keyfield(spatialUnit);
+  // we need to create a function to update the crossfilter based on
+  // the current state of our map.  it needs to take two arguments:
+  // dimension and value; note - we may need to update the spatial
+  // ressolution to be limited to only those below the currently
+  // selected spatial unit:
+  const updateCrossfilter = (dimension, value) => {
+    // when we update our cross filter dimension, we also want
+    // need to remove any existing filters from lower levels.  If
+    // we go back to Lake from a management unit, we all
+    // management units to be included in the results.
+
+    switch (dimension) {
+      case "basin":
+        lakePolygonDim.filterAll();
+        jurisdictionPolygonDim.filterAll();
+        manUnitPolygonDim.filterAll();
+        update_spatialUnit("jurisdiction");
+        break;
+      case "lake":
+        lakePolygonDim.filter(value);
+        jurisdictionPolygonDim.filterAll();
+        manUnitPolygonDim.filterAll();
+        update_spatialUnit("jurisdiction");
+        break;
+      case "jurisdiction":
+        jurisdictionPolygonDim.filter(value);
+        manUnitPolygonDim.filterAll();
+        update_spatialUnit("manUnit");
+        break;
+      case "manUnit":
+        manUnitPolygonDim.filter(value);
+        break;
+    }
+  };
+
+  polygons.updateCrossfilter(updateCrossfilter);
+
+  //piecharts.radiusAccessor(d => d.total).keyfield(spatialUnit);
+  // instantiate our map and pie charts:
   let pts = get_pts(spatialUnit, centroids, ptAccessor);
-  mapg.data([pts]).call(overlay);
+  polygons.render();
+  pieg.data([pts]).call(piecharts);
+
+  const update_spatialUnit = value => {
+    spatialUnit = value;
+    pts = get_pts(value, centroids, ptAccessor);
+    pieg.data([pts]).call(piecharts);
+  };
 
   spatial_resolution.on("change", function() {
     // when the radio buttons change, we and to update the selected
     // saptial strata and refesh the map
-    spatialUnit = this.value;
-    pts = get_pts(spatialUnit, centroids, ptAccessor);
-    mapg.data([pts]).call(overlay);
+    update_spatialUnit(this.value);
+    //    spatialUnit = this.value;
+    //    pts = get_pts(spatialUnit, centroids, ptAccessor);
+    //    pieg.data([pts]).call(piecharts);
     //refreshMap(spatial_xfDims);
   });
 
@@ -672,6 +487,11 @@ Promise.all([
 
     //update our map too:
     let pts = get_pts(spatialUnit, centroids, ptAccessor);
-    mapg.data([pts]).call(overlay);
+    pieg.data([pts]).call(piecharts);
+  });
+
+  mymap.on("moveend", function() {
+    polygons.render();
+    pieg.call(piecharts);
   });
 });
