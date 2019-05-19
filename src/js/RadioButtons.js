@@ -1,4 +1,4 @@
-import { select } from "d3";
+import { select, selectAll } from "d3";
 
 export const spatialRadioButtons = () => {
   let strata = [
@@ -12,7 +12,7 @@ export const spatialRadioButtons = () => {
   let selector = "#strata-selector";
 
   function buttons() {
-    let strataSelector = select(selector);
+    let strataSelector = select(selector).data([null]);
 
     let strataForm = strataSelector.append("form").attr("id", "strata-form");
 
@@ -26,7 +26,7 @@ export const spatialRadioButtons = () => {
       .append("input")
       .attr("type", "radio")
       .attr("value", d => d.strata)
-      .attr("name", "strataButtons")
+      .attr("class", "strataButtons")
       .property("checked", d => d.strata === checked);
 
     strataButtons
@@ -51,6 +51,15 @@ export const spatialRadioButtons = () => {
     if (!arguments.length) return selector;
     selector = value;
     return buttons;
+  };
+
+  // expose a method to update the radio buttons so we can keep them
+  // in sync with other controls.
+  buttons.refresh = () => {
+    let strataButtons = selectAll(".strataButtons").property(
+      "checked",
+      d => d.strata === checked
+    );
   };
 
   return buttons;

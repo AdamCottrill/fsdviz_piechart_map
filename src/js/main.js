@@ -369,6 +369,7 @@ Promise.all([
         break;
       case "manUnit":
         manUnitPolygonDim.filter(value);
+        update_spatialUnit("grid10");
         break;
     }
   };
@@ -383,6 +384,7 @@ Promise.all([
 
   const update_spatialUnit = value => {
     spatialUnit = value;
+    spatialSelector.checked(spatialUnit).refresh();
     pts = get_pts(value, centroids, ptAccessor);
     pieg.data([pts]).call(piecharts);
   };
@@ -391,10 +393,6 @@ Promise.all([
     // when the radio buttons change, we and to update the selected
     // saptial strata and refesh the map
     update_spatialUnit(this.value);
-    //    spatialUnit = this.value;
-    //    pts = get_pts(spatialUnit, centroids, ptAccessor);
-    //    pieg.data([pts]).call(piecharts);
-    //refreshMap(spatial_xfDims);
   });
 
   // if the crossfilter changes, update our checkboxes:

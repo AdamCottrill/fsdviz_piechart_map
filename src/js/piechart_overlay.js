@@ -128,12 +128,12 @@ export const piechart_overlay = () => {
             // second click on same circle, turn off selectedPie and make point info empty:
             selectedPie = null;
             select("#point-info").html("");
-            selectAll(".selectedPie").classed("selected-pie", false);
+            selectAll(".selected-pie").classed("selected-pie", false);
           } else {
             // set selectedPie, fill in map info and highlight our selectedPie pie
             selectedPie = d.key;
             select("#point-info").html(get_pointInfo(d));
-            selectAll(".selectedPie").classed("selected-pie", false);
+            selectAll(".selected-pie").classed("selected-pie", false);
             select(this).classed("selected-pie", true);
           }
         });
